@@ -1,0 +1,36 @@
+<html>
+<head>
+
+<style type="text/css">
+
+/* 
+ * div width/height must match canvas
+ * width/height to ensure 1:1 aspect ratio  
+ */
+#canvas {
+  width: 800;
+  height: 600;
+  border: 1px solid black; 
+}
+</style>
+</head>
+
+
+<body onload="init();">
+
+  <div class="buttonBar">
+    <span>
+      <button id="play_btn" type="button">Start Game</button>
+    </span>
+  </div>
+
+  <canvas id="canvas" width="800" height="600"></canvas>
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js" 
+          type="text/javascript" ></script>
+  <script src="../gfx/gfx.js"        type="text/javascript"></script>
+  <script src="../gfx/sceneGraph.js" type="text/javascript"></script>
+  <script src="tft.js"               type="text/javascript"></script>
+
+</body>
+</html>
