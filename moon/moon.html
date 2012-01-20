@@ -1,0 +1,59 @@
+<html>
+<head>
+
+<style type="text/css">
+
+/* 
+ * div width/height must match canvas
+ * width/height to ensure 1:1 aspect ratio  
+ */
+#canvas {
+  width: 800;
+  height: 600;
+  border: 1px solid black; 
+}
+button {
+  padding: 0 1em;
+}
+span {
+  padding: 0 2em;
+}
+.buttonBar {
+  margin: auto;
+  width: 800;
+  padding:1em;
+}
+</style>
+</head>
+
+
+<body onload="init();">
+  <div class="buttonBar">
+    <span>
+      <button id="earthquake_btn" type="button">Earthquake</button>
+      <span id="message" />
+    </span>
+    <span>
+      <button id="play_btn" type="button">Stop</button>
+    </span>
+    <span>
+      <button id="zoom_in_btn"  type="button">+</button>
+      <img width="20" height="20"
+	   src="http://findicons.com/files/icons/575/pleasant/128/search.png"/>
+      <button id="zoom_out_btn" type="button">-</button>
+    </span>
+  </div>
+  <div id="fps"></div>
+
+  <canvas id="canvas" width="800" height="600"></canvas>
+
+
+
+  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.5.2/jquery.min.js" 
+          type="text/javascript" ></script>
+  <script src="../gfx/gfx.js"        type="text/javascript"></script>
+  <script src="../gfx/sceneGraph.js" type="text/javascript"></script>
+  <script src="moon.js"       type="text/javascript"></script>
+
+</body>
+</html>
