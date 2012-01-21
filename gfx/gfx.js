@@ -63,12 +63,12 @@ Gfx.Canvas = DefineClass(
         }
         if (!this.gl) { alert("Could not initialize graphics.  Sorry."); }
 
-        return gl;
+        return this.gl;
     },
 
     // wipe screen
     clear: function() {
-        this.gl.clearRect( 0, 0, gl.viewportWidth, gl.viewportHeight );
+        this.gl.clearRect( 0, 0, this.gl.viewportWidth, this.gl.viewportHeight );
     },
 
     //----------------------------------------

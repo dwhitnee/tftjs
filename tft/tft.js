@@ -1,10 +1,5 @@
 // js for TFT
 
-var gl, canvas;
-var player1, player2;
-var scene, field;
-var scale = 1;
-
 // Stories
 // ijkl keys will move sprite
 // wasd will move second sprite
@@ -70,91 +65,117 @@ TFT.Field = DefineClass(
     }
 );
 
+TFT.App = DefineClass(
+{
 
-//----------------------------------------
-// Key Clicks
-//----------------------------------------
-function initHandlers() {
+//     var gl, canvas;
+//     var player1, player2;
+//     var scene, field;
+//     var scale = 1;
+    
+    //----------------------------------------
+    // Key Clicks
+    //----------------------------------------
+    initHandlers: function() {
 
-    // zoom, keys don't work in FF3?
-    $("#canvas").keydown(
-        function( e ) {
-            alert("key:", e);
-            debugger;
-        }
-    );
-}
+        // zoom, keys don't work in FF3?
+        $("#canvas").keydown(
+            function( e ) {
+                alert("key:", e);
+                debugger;
+            }
+        );
+    },
 
-//----------------------------------------------------------------------
-//----------------------------------------------------------------------
-function init(){
+    //----------------------------------------
+    initGame: function() {
+        this.player1 = new TFT.Player("Red", -100, 0);
+        this.player2 = new TFT.Player("Red", 100, 0);
 
-    initHandlers();
-    initGame();
+        this.field = new TFT.Field( { width: 750, height: 500 } );
+    },
 
-    initGraphics();
-}
+    //----------------------------------------
+    initGraphics: function() {
+        this.canvas = new Gfx.Canvas( $('#canvas')[0] );
 
-//----------------------------------------------------------------------
-//----------------------------------------------------------------------
-function initGame() {
-    player1 = new TFT.Player("Red", -100, 0);
-    player2 = new TFT.Player("Red", 100, 0);
+        // gl.globalCompositeOperation = 'destination-over';
+        this.canvas.gl.globalCompositeOperation = 'source-over';
 
-    field = new TFT.Field( { width: 750, height: 500 } );
-}
+        this.buildScene();
+    },
+    
+    start: function() {
+        Gfx.Animation.start( draw );
+    },
 
-//----------------------------------------------------------------------
-//----------------------------------------------------------------------
-function initGraphics() {
-    canvas = new Gfx.Canvas( $('#canvas')[0] );
-    gl = canvas.gl;
+    //----------------------------------------
+    init: function(){
 
-    // gl.globalCompositeOperation = 'destination-over';
-    gl.globalCompositeOperation = 'source-over';
+        this.initHandlers();
+        this.initGame();
+        this.initGraphics();
+    },
 
-    scene = buildScene();
+    //----------------------------------------
+    //  draw field and everyone on it,
+    // needs to be static for callback, how to add scope?
+    //----------------------------------------
+//     draw: function() {
+//         Gfx.Animation.frameStart();
 
-    Gfx.Animation.start( draw );
-}
+//         this.canvas.clear();
+//         // canvas.clearWithFade( 0.50 );
 
-//----------------------------------------------------------------------
-//  draw field and everyone on it
-//----------------------------------------------------------------------
+//         this.scene.traverse( this.canvas.gl );
+//         Gfx.Animation.frameDone();
+//     },
+
+    //----------------------------------------
+    //  create scene graph, just the field for now
+    //----------------------------------------    
+    buildScene: function() {
+
+        var app = this;
+        var cameraView = {
+            name: "Game Field View",
+            xTrans: this.field.width/2,
+            yTrans:  this.field.height/2,
+            scale: 1,
+            transform: function( gl ) {
+                // move field centered on 0,0 to canvas of arbitrary size
+                gl.translate( this.xTrans, this.yTrans );
+                gl.scale( this.scale, this.scale );
+            }
+        };
+
+        this.scene = new Gfx.Group( { name: "Scene" } );
+
+        var viewXform  = new Gfx.Transform( cameraView );
+        viewXform.add( new Gfx.Geode( this.field ));
+
+        this.scene.add( viewXform );
+    }
+
+});
+
+
 function draw() {
     Gfx.Animation.frameStart();
 
-    canvas.clear();
-    // canvas.clearWithFade( 0.50 );
+    tft.canvas.clear();
+    // tft.canvas.clearWithFade( 0.50 );
 
-    scene.traverse( gl );
+    tft.scene.traverse( tft.canvas.gl );
+
+    $("#fps").text("fps=" + Gfx.Animation.fps + ",  delay=" +
+                   Gfx.Animation.framePause + "ms, c = " +
+                   Gfx.Animation.frameCount );
+
     Gfx.Animation.frameDone();
 }
 
-//----------------------------------------------------------------------
-//  create scene graph, just the field for now
-//----------------------------------------------------------------------
-function buildScene() {
 
-    var scene = new Gfx.Group( { name: "Scene" } );
+var tft = new TFT.App();
 
-    var viewXform  = new Gfx.Transform( view );
-    scene.add( viewXform );
-
-    viewXform.add( new Gfx.Geode( field ));
-
-    return scene;
-}
-
-
-//----------------------------------------------------------------------
-// camera view
-//----------------------------------------------------------------------
-var view = {
-    name: "Field View",
-    transform: function( gl ) {
-        // move field centered on 0,0 to canvas of arbitrary size
-        gl.translate( field.width/2, field.height/2 );
-        gl.scale( scale, scale );
-    }
-};
+$(document).ready( tft.start );
