@@ -112,6 +112,8 @@ Gfx.Animation = DefineClass(
 
         // call draw routine with given scope, if any
         this.drawFn = drawFn;
+//         this.drawTimer = setTimeout( this.drawFn.bind( scope ), 
+//                                      this.framePause );
         this.drawTimer = setTimeout( this.drawFn, this.framePause );
     },
     stop: function() {

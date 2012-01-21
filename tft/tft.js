@@ -9,13 +9,80 @@
 
 var TFT = {};
 
+var Dir = {
+    LEFT: Math.PI,
+    RIGHT: 0,
+    UP:  Math.PI/2,
+    DOWN: -Math.PI/2
+};
+
 TFT.Player = DefineClass(
     {
-        init:  function( name, x, y ) {
-            this.name = name;
-            this.pos = [x,y]; 
-            this.wall = [];   // list of x,y vertices
+        init:  function( data ) {
+            if (data) {
+                $.extend( this, data );
+            }
+            this.wall = [[this.pos[0], this.pos[1] ]];   // list of x,y vertices
+        },
+
+        move: function() {
+            if (this.dir == Dir.LEFT)  { this.pos[0] -= 1; }
+            if (this.dir == Dir.RIGHT) { this.pos[0] += 1; }
+            if (this.dir == Dir.UP)    { this.pos[1] += 1; }
+            if (this.dir == Dir.DOWN)  { this.pos[1] -= 1; }
+        },
+
+        turn: function( dir ) {
+            if (dir=='r') {
+                this.dir -= Math.PI/2;
+            } else {
+                this.dir += Math.PI/2;
+            }
+            // normalize
+            if (this.dir > Math.PI) {
+                this.dir -= 2*Math.PI;
+            }
+            if (this.dir <= -Math.PI) {
+                this.dir += 2*Math.PI;
+            }
+
+            this.wall.push( [this.pos[0], this.pos[1]] );
+        },
+
+        draw: function( gl ) {
+            this.drawWall( gl );
+            this.drawCycle( gl );
+        },
+
+        drawWall: function( gl ) {
+            gl.save();
+            gl.strokeStyle = this.color;  // make separate?
+            
+            gl.moveTo( this.wall[0][0], this.wall[0][1] );
+            for (var i = 1; i < this.wall.length; i++) {
+                gl.lineTo( this.wall[i][0], this.wall[i][1] );
+            }
+            gl.lineTo( this.pos[0], this.pos[1] );
+
+            gl.stroke();
+            gl.restore();
+        },
+
+        drawCycle: function( gl ) {
+            gl.save();
+            this.transform( gl );   // could make a node out of this
+            gl.fillStyle = this.color;
+            gl.beginPath();
+            gl.rect( -10, -5, 20, 10 );   // tlx, tly, w, h
+            gl.fill();
+            gl.restore();
+        },
+
+        transform: function( gl ) {
+            gl.translate( this.pos[0], this.pos[1] );
+            gl.rotate( this.dir );
         }
+        
     }
 );
 
@@ -36,7 +103,6 @@ TFT.Field = DefineClass(
 
             gl.save();
             var fieldColor = 100;
-            var gridLineColor = 200;
 
             // blank field
              
@@ -59,7 +125,6 @@ TFT.Field = DefineClass(
                 gl.stroke();
             }
 
-
             gl.restore();  // pop colors, styles
         }
     }
@@ -67,11 +132,21 @@ TFT.Field = DefineClass(
 
 TFT.App = DefineClass(
 {
-
-//     var gl, canvas;
-//     var player1, player2;
-//     var scene, field;
 //     var scale = 1;
+
+    //----------------------------------------
+    start: function() {
+        var app = this;
+        Gfx.Animation.start( function() { app.draw(); });
+    },
+
+    //----------------------------------------
+    init: function(){
+
+        this.initHandlers();
+        this.initGame();
+        this.initGraphics();
+    },
     
     //----------------------------------------
     // Key Clicks
@@ -79,18 +154,44 @@ TFT.App = DefineClass(
     initHandlers: function() {
 
         // zoom, keys don't work in FF3?
-        $("#canvas").keydown(
+        var app = this;
+        $(document).keydown(
             function( e ) {
-                alert("key:", e);
-                debugger;
+                if (e.keyCode == 65) {  // 'a'
+                    app.player1.turn('l');
+                    e.stopPropagation();
+                }
+                if (e.keyCode == 68) {  // 'd'
+                    app.player1.turn('r');
+                    e.stopPropagation();
+                }
+                if (e.keyCode == 37) {  // left arrow
+                    app.player2.turn('l');
+                    e.stopPropagation();
+                }
+                if (e.keyCode == 39) {  // right arrow
+                    app.player2.turn('r');
+                    e.stopPropagation();
+                }
             }
         );
     },
 
     //----------------------------------------
     initGame: function() {
-        this.player1 = new TFT.Player("Red", -100, 0);
-        this.player2 = new TFT.Player("Red", 100, 0);
+        this.player1 = new TFT.Player( 
+            { name: "Red", 
+              pos: [-200, 0],
+              dir: Dir.RIGHT,
+              color: "rgba( 100, 20, 0,.7)"
+            });
+
+        this.player2 = new TFT.Player( 
+            { name: "Blue", 
+              pos: [200, 0],
+              dir: Dir.LEFT,
+              color: "rgba( 0, 20, 100, .7)" 
+            });
 
         this.field = new TFT.Field( { width: 750, height: 500 } );
     },
@@ -105,24 +206,12 @@ TFT.App = DefineClass(
         this.buildScene();
     },
     
-    start: function() {
-        var app = this;
-        Gfx.Animation.start( function() { app.draw(); });
-    },
-
-    //----------------------------------------
-    init: function(){
-
-        this.initHandlers();
-        this.initGame();
-        this.initGraphics();
-    },
-
     //----------------------------------------
     //  draw field and everyone on it,
     // needs to be static for callback, how to add scope?
     //----------------------------------------
     draw: function() {
+        this.act();
         Gfx.Animation.frameStart();
 
         this.canvas.clear();
@@ -132,7 +221,10 @@ TFT.App = DefineClass(
 
         $("#fps").text("fps=" + Gfx.Animation.fps + ",  delay=" +
                        Gfx.Animation.framePause + "ms, c = " +
-                       Gfx.Animation.frameCount );
+                       Gfx.Animation.frameCount +
+                       " 1 dir = " + this.player1.dir +
+                       " 2 dir = " + this.player2.dir );
+        
 
         Gfx.Animation.frameDone();
     },
@@ -151,7 +243,7 @@ TFT.App = DefineClass(
             transform: function( gl ) {
                 // move field centered on 0,0 to canvas of arbitrary size
                 gl.translate( this.xTrans, this.yTrans );
-                gl.scale( this.scale, this.scale );
+                gl.scale( this.scale, -this.scale );   // flip Y axis
             }
         };
 
@@ -159,8 +251,17 @@ TFT.App = DefineClass(
 
         var viewXform  = new Gfx.Transform( cameraView );
         viewXform.add( new Gfx.Geode( this.field ));
+        
+        // this makes two separate copies?  FIXME
+        viewXform.add( new Gfx.Geode( this.player1 ));
+        viewXform.add( new Gfx.Geode( this.player2 ));
 
         this.scene.add( viewXform );
+    },
+
+    act: function() {
+        this.player1.move();
+        this.player2.move();
     }
 
 });

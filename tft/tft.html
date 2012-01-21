@@ -8,9 +8,14 @@
  * width/height to ensure 1:1 aspect ratio  
  */
 #canvas {
-/*  width: 750; */ 
-/*  height: 500; */
   border: 1px solid black; 
+}
+#canvasContainer {
+  margin:0 auto; 
+  width: 750px;
+}
+.buttonBar {
+  padding: 1em;
 }
 </style>
 </head>
@@ -18,14 +23,20 @@
 
 <body>
 
-  <div class="buttonBar">
-    <span>
-      <button id="play_btn" type="button">Start Game</button>
-    </span>
-  </div>
-  <div id="fps"></div>
+  <div id="canvasContainer" 
+       tabindex="0" 
+       onmouseover="this.focus()" 
+       onmouseout="this.blur()">
 
-  <canvas id="canvas" width="750" height="500"></canvas>
+    <div class="buttonBar">
+      <span>
+	<button id="play_btn" type="button">Start Game</button>
+      </span>
+      <span id="fps"></span>
+    </div>
+
+    <canvas id="canvas" width="750" height="500"></canvas>
+  </div>
 
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js" 
           type="text/javascript" ></script>
