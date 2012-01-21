@@ -106,7 +106,8 @@ TFT.App = DefineClass(
     },
     
     start: function() {
-        Gfx.Animation.start( draw );
+        var app = this;
+        Gfx.Animation.start( function() { app.draw(); });
     },
 
     //----------------------------------------
@@ -121,15 +122,20 @@ TFT.App = DefineClass(
     //  draw field and everyone on it,
     // needs to be static for callback, how to add scope?
     //----------------------------------------
-//     draw: function() {
-//         Gfx.Animation.frameStart();
+    draw: function() {
+        Gfx.Animation.frameStart();
 
-//         this.canvas.clear();
-//         // canvas.clearWithFade( 0.50 );
+        this.canvas.clear();
+        // canvas.clearWithFade( 0.50 );
 
-//         this.scene.traverse( this.canvas.gl );
-//         Gfx.Animation.frameDone();
-//     },
+        this.scene.traverse( this.canvas.gl );
+
+        $("#fps").text("fps=" + Gfx.Animation.fps + ",  delay=" +
+                       Gfx.Animation.framePause + "ms, c = " +
+                       Gfx.Animation.frameCount );
+
+        Gfx.Animation.frameDone();
+    },
 
     //----------------------------------------
     //  create scene graph, just the field for now
@@ -160,22 +166,10 @@ TFT.App = DefineClass(
 });
 
 
-function draw() {
-    Gfx.Animation.frameStart();
-
-    tft.canvas.clear();
-    // tft.canvas.clearWithFade( 0.50 );
-
-    tft.scene.traverse( tft.canvas.gl );
-
-    $("#fps").text("fps=" + Gfx.Animation.fps + ",  delay=" +
-                   Gfx.Animation.framePause + "ms, c = " +
-                   Gfx.Animation.frameCount );
-
-    Gfx.Animation.frameDone();
-}
+// crank this sucker up!
+$(document).ready( function() {
+    var tft = new TFT.App();
+    tft.start();
+});
 
 
-var tft = new TFT.App();
-
-$(document).ready( tft.start );

@@ -100,12 +100,18 @@ Gfx.Animation = DefineClass(
 
     init: function() { },
 
+    //----------------------------------------------------------------------
+    // expects static drawing function, scope must be provided.
+    // Ex: Gfx.Animation.start( function() { app.draw(); });
+    //----------------------------------------------------------------------
     start: function( drawFn ) {
         this.animationStart = new Date();
         this.frameCount = 0;
-        this.drawFn = drawFn;
         // this.drawTimer = setInterval( this.drawFn, this.framePause );
         clearTimeout( this.drawTimer );
+
+        // call draw routine with given scope, if any
+        this.drawFn = drawFn;
         this.drawTimer = setTimeout( this.drawFn, this.framePause );
     },
     stop: function() {
