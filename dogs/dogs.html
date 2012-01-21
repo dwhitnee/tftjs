@@ -1,0 +1,74 @@
+<html>
+<head>
+
+<style type="text/css">
+
+img {
+  width:  120px;
+  height: 180px;
+}
+.dog {
+  float: left;
+  padding: 1em;
+  border: none
+}
+</style>
+</head>
+
+
+<body onload="init();">
+  <div class="dogs">
+    <div class="dog">
+      <img src="http://home.comcast.net/~djw98465/sydney/Sydney003.jpg">
+    </div>
+    <div class="dog">
+      <img src="http://home.comcast.net/~djw98465/sydney/Sydney003.jpg">
+    </div>
+    <div class="dog">
+      <img src="http://home.comcast.net/~djw98465/sydney/Sydney003.jpg">
+    </div>
+    <div class="dog">
+      <img src="http://home.comcast.net/~djw98465/sydney/Sydney003.jpg">
+    </div>
+    <div class="dog">
+      <img src="http://home.comcast.net/~djw98465/sydney/Sydney003.jpg">
+    </div>
+  </div>
+
+  <div id="sound" ></div>
+
+
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js" 
+          type="text/javascript" ></script>
+
+  <script type="text/javascript" >
+    var note = "http://www.sound-effect.com/sounds1/animal/Dogs/dog.wav"
+
+    function init() {
+      // alert("woof");
+
+      $(".dog").mouseenter(
+        function ( e ) {
+          // play note
+          // alert("sydney!");
+          playSound( note );
+          $(e.currentTarget).css("background", "blue");
+	  // debugger
+       });
+
+      $(".dog").mouseleave(
+        function ( e ) {
+         $(e.currentTarget).css("background", "none");
+       })
+    }
+
+    function playSound( soundfile ) {
+      document.getElementById("sound").innerHTML=
+         "<embed src=\""+soundfile+"\" hidden=\"true\" autostart=\"true\" loop=\"false\" />";
+ }
+
+  </script>
+
+</body>
+</html>
