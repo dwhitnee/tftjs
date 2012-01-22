@@ -157,7 +157,9 @@ Gfx.Animation = DefineClass(
 
         // wait a bit before next frame
         clearTimeout( this.drawTimer );
-        this.drawTimer = setTimeout( this.drawFn, this.framePause );
+        if (this.drawFn) {
+            this.drawTimer = setTimeout( this.drawFn, this.framePause );
+        }
     }
 
 });

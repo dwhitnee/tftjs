@@ -1,103 +1,24 @@
 // js for TFT
 
 // Stories
-// ijkl keys will move sprite
-// wasd will move second sprite
-// sprite leaves wall
-//   does wall need redraw and memory?
+// X ijkl keys will move sprite
+// X wasd will move second sprite
+// X sprite leaves wall
+// X  does wall need redraw and memory?
+// 
+// Add explosion sound
+// Add guaranteed frame rate (experimental)
+// Add Scoring
+// Host this
+// Refactor
+//  
+// Remote players?
+// Computer player?
+// Replay game?
+// Save game to Dynamo?
+// Better Cycle sprite
 //----------------------------------------------------------------------
 
-var TFT = {};
-
-var Dir = {
-    LEFT: Math.PI,
-    RIGHT: 0,
-    UP:  Math.PI/2,
-    DOWN: -Math.PI/2
-};
-
-//----------------------------------------------------------------------
-//----------------------------------------------------------------------
-TFT.Player = DefineClass(
-{
-    init:  function( data ) {
-        if (data) {
-            $.extend( this, data );
-        }
-        this.wall = [[this.pos[0], this.pos[1] ]];   // list of x,y vertices
-    },
-    
-    move: function() {
-        var dist = 2;
-        if (this.dir == Dir.LEFT)  { this.pos[0] -= dist; }
-        if (this.dir == Dir.RIGHT) { this.pos[0] += dist; }
-        if (this.dir == Dir.UP)    { this.pos[1] += dist; }
-        if (this.dir == Dir.DOWN)  { this.pos[1] -= dist; }
-    },
-    
-    turn: function( dir ) {
-        if (dir=='r') {
-            this.dir -= Math.PI/2;
-        } else {
-            this.dir += Math.PI/2;
-        }
-        // normalize
-        if (this.dir > Math.PI) {
-            this.dir -= 2*Math.PI;
-        }
-        if (this.dir <= -Math.PI) {
-            this.dir += 2*Math.PI;
-        }
-        
-        this.wall.push( [this.pos[0], this.pos[1]] );
-    }
-});
-
-//----------------------------------------------------------------------
-//----------------------------------------------------------------------
-TFT.PlayerGraphics = DefineClass(
-{
-    init: function( player ) {
-        this.player = player;
-    },
-    
-    draw: function( gl ) {
-        this.drawWall( gl );
-        this.drawCycle( gl );
-    },
-    
-    drawWall: function( gl ) {
-        gl.save();
-        gl.strokeStyle = this.player.color;  // make separate?
-        
-        var wall = this.player.wall;
-        gl.moveTo( wall[0][0], wall[0][1] );
-        for (var i = 1; i < wall.length; i++) {
-            gl.lineTo( wall[i][0], wall[i][1] );
-        }
-        gl.lineTo( this.player.pos[0], this.player.pos[1] );
-        
-        gl.stroke();
-        gl.restore();
-    },
-    
-    drawCycle: function( gl ) {
-        gl.save();
-        this.transform( gl );   // could make a node out of this
-                
-        gl.fillStyle = this.player.color;
-        gl.beginPath();
-        gl.rect( -10, -5, 20, 10 );   // tlx, tly, w, h
-        gl.fill();
-        gl.restore();
-    },
-    
-    transform: function( gl ) {
-        gl.translate( this.player.pos[0], this.player.pos[1] );
-        gl.rotate( this.player.dir );
-    }
-    
-});
 
 //----------------------------------------------------------------------
 //----------------------------------------------------------------------
@@ -121,14 +42,15 @@ TFT.Field = DefineClass(
         
         // blank field
         
-        gl.fillStyle = 'rgba( 100,100,100, 1)';   // fill 
+        gl.fillStyle = 'rgb( 100,100,100)';   // fill 
         
         gl.beginPath();
         gl.rect( -x, -y, this.width, this.height );
         gl.fill();
         
-        gl.strokeStyle = 'rgba( 120,120,120, 1)';   // grid line
-        
+        gl.strokeStyle = 'rgb( 120,120,120)';   // grid line
+        gl.lineWidth = 2;
+
         for (var xg = -x; xg < x; xg += this.gridSpacing) {
             gl.moveTo( xg, -y );
             gl.lineTo( xg, y );
@@ -151,10 +73,15 @@ TFT.App = DefineClass(
     //----------------------------------------
     start: function() {
         var app = this;
-        Gfx.Animation.start( function() { app.draw(); });
+        Gfx.Animation.start( function() { app.update(); });
     },
     stop:  function() {
         Gfx.Animation.stop();
+    },
+
+    reset:  function() {
+        this.initGame();
+        this.initGraphics();
     },
 
     //----------------------------------------
@@ -173,8 +100,7 @@ TFT.App = DefineClass(
     init: function(){
 
         this.initHandlers();
-        this.initGame();
-        this.initGraphics();
+        this.reset();
     },
     
     //----------------------------------------
@@ -244,9 +170,9 @@ TFT.App = DefineClass(
     //----------------------------------------
     //  draw field and everyone on it,
     // needs to be static for callback, how to add scope?
+    // FIXME: use requestAnimationFrame?
     //----------------------------------------
     draw: function() {
-        this.act();
         Gfx.Animation.frameStart();
 
         this.canvas.clear();
@@ -290,11 +216,39 @@ TFT.App = DefineClass(
         this.scene.add( viewXform );
     },
 
-    act: function() {
+    update: function() {
         this.player1.move();
         this.player2.move();
-    }
 
+        this.draw();
+
+        if (this.detectCollisions()) {
+            this.stop();
+            this.reset();
+            $("#play_btn").text("Restart");
+        }
+    },
+
+    detectCollisions: function() {
+        if ( this.player1.interects( this.player2 )) {
+            alert("Boom! Tie.");
+            return true;
+        }
+        if (this.player1.hitsWall( this.player1 ) ||
+            this.player1.hitsWall( this.player2 ))
+        {
+            alert("Blue wins!");
+            return true;
+        }
+        if (this.player2.hitsWall( this.player2 ) ||
+            this.player2.hitsWall( this.player1 )) 
+        {
+            alert("Red  wins!");
+            return true;
+        }
+        return false;
+    }
+    
 });
 
 
