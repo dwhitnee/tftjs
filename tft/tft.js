@@ -16,119 +16,133 @@ var Dir = {
     DOWN: -Math.PI/2
 };
 
+//----------------------------------------------------------------------
+//----------------------------------------------------------------------
 TFT.Player = DefineClass(
-    {
-        init:  function( data ) {
-            if (data) {
-                $.extend( this, data );
-            }
-            this.wall = [[this.pos[0], this.pos[1] ]];   // list of x,y vertices
-        },
-
-        move: function() {
-            if (this.dir == Dir.LEFT)  { this.pos[0] -= 1; }
-            if (this.dir == Dir.RIGHT) { this.pos[0] += 1; }
-            if (this.dir == Dir.UP)    { this.pos[1] += 1; }
-            if (this.dir == Dir.DOWN)  { this.pos[1] -= 1; }
-        },
-
-        turn: function( dir ) {
-            if (dir=='r') {
-                this.dir -= Math.PI/2;
-            } else {
-                this.dir += Math.PI/2;
-            }
-            // normalize
-            if (this.dir > Math.PI) {
-                this.dir -= 2*Math.PI;
-            }
-            if (this.dir <= -Math.PI) {
-                this.dir += 2*Math.PI;
-            }
-
-            this.wall.push( [this.pos[0], this.pos[1]] );
-        },
-
-        draw: function( gl ) {
-            this.drawWall( gl );
-            this.drawCycle( gl );
-        },
-
-        drawWall: function( gl ) {
-            gl.save();
-            gl.strokeStyle = this.color;  // make separate?
-            
-            gl.moveTo( this.wall[0][0], this.wall[0][1] );
-            for (var i = 1; i < this.wall.length; i++) {
-                gl.lineTo( this.wall[i][0], this.wall[i][1] );
-            }
-            gl.lineTo( this.pos[0], this.pos[1] );
-
-            gl.stroke();
-            gl.restore();
-        },
-
-        drawCycle: function( gl ) {
-            gl.save();
-            this.transform( gl );   // could make a node out of this
-            gl.fillStyle = this.color;
-            gl.beginPath();
-            gl.rect( -10, -5, 20, 10 );   // tlx, tly, w, h
-            gl.fill();
-            gl.restore();
-        },
-
-        transform: function( gl ) {
-            gl.translate( this.pos[0], this.pos[1] );
-            gl.rotate( this.dir );
+{
+    init:  function( data ) {
+        if (data) {
+            $.extend( this, data );
+        }
+        this.wall = [[this.pos[0], this.pos[1] ]];   // list of x,y vertices
+    },
+    
+    move: function() {
+        var dist = 2;
+        if (this.dir == Dir.LEFT)  { this.pos[0] -= dist; }
+        if (this.dir == Dir.RIGHT) { this.pos[0] += dist; }
+        if (this.dir == Dir.UP)    { this.pos[1] += dist; }
+        if (this.dir == Dir.DOWN)  { this.pos[1] -= dist; }
+    },
+    
+    turn: function( dir ) {
+        if (dir=='r') {
+            this.dir -= Math.PI/2;
+        } else {
+            this.dir += Math.PI/2;
+        }
+        // normalize
+        if (this.dir > Math.PI) {
+            this.dir -= 2*Math.PI;
+        }
+        if (this.dir <= -Math.PI) {
+            this.dir += 2*Math.PI;
         }
         
+        this.wall.push( [this.pos[0], this.pos[1]] );
     }
-);
+});
 
-TFT.Field = DefineClass(
-    {
-        init: function( data ) {
-            if (data) {
-                $.extend( this, data );
-            }
-            this.width  = this.width || 800;
-            this.height = this.height || 600;
-            this.gridSpacing = this.gridSpacing || this.width / 10;
-        },
-        draw: function( gl ) {
-
-            var x = this.width/2;
-            var y = this.height/2;
-
-            gl.save();
-            var fieldColor = 100;
-
-            // blank field
-             
-            gl.fillStyle = 'rgba( 100,100,100, 1)';   // fill 
-
-            gl.beginPath();
-            gl.rect( -x, -y, this.width, this.height );
-            gl.fill();
-
-            gl.strokeStyle = 'rgba( 120,120,120, 1)';   // grid line
-
-            for (var xg = -x; xg < x; xg += this.gridSpacing) {
-                gl.moveTo( xg, -y );
-                gl.lineTo( xg, y );
-                gl.stroke();
-            }
-            for (var yg = -y; yg < y; yg += this.gridSpacing) {
-                gl.moveTo( -x, yg );
-                gl.lineTo( x, yg );
-                gl.stroke();
-            }
-
-            gl.restore();  // pop colors, styles
+//----------------------------------------------------------------------
+//----------------------------------------------------------------------
+TFT.PlayerGraphics = DefineClass(
+{
+    init: function( player ) {
+        this.player = player;
+    },
+    
+    draw: function( gl ) {
+        this.drawWall( gl );
+        this.drawCycle( gl );
+    },
+    
+    drawWall: function( gl ) {
+        gl.save();
+        gl.strokeStyle = this.player.color;  // make separate?
+        
+        var wall = this.player.wall;
+        gl.moveTo( wall[0][0], wall[0][1] );
+        for (var i = 1; i < wall.length; i++) {
+            gl.lineTo( wall[i][0], wall[i][1] );
         }
+        gl.lineTo( this.player.pos[0], this.player.pos[1] );
+        
+        gl.stroke();
+        gl.restore();
+    },
+    
+    drawCycle: function( gl ) {
+        gl.save();
+        this.transform( gl );   // could make a node out of this
+                
+        gl.fillStyle = this.player.color;
+        gl.beginPath();
+        gl.rect( -10, -5, 20, 10 );   // tlx, tly, w, h
+        gl.fill();
+        gl.restore();
+    },
+    
+    transform: function( gl ) {
+        gl.translate( this.player.pos[0], this.player.pos[1] );
+        gl.rotate( this.player.dir );
     }
-);
+    
+});
+
+//----------------------------------------------------------------------
+//----------------------------------------------------------------------
+TFT.Field = DefineClass(
+{
+    init: function( data ) {
+        if (data) {
+            $.extend( this, data );
+        }
+        this.width  = this.width || 800;
+        this.height = this.height || 600;
+        this.gridSpacing = this.gridSpacing || this.width / 10;
+    },
+    draw: function( gl ) {
+        
+        var x = this.width/2;
+        var y = this.height/2;
+        
+        gl.save();
+        var fieldColor = 100;
+        
+        // blank field
+        
+        gl.fillStyle = 'rgba( 100,100,100, 1)';   // fill 
+        
+        gl.beginPath();
+        gl.rect( -x, -y, this.width, this.height );
+        gl.fill();
+        
+        gl.strokeStyle = 'rgba( 120,120,120, 1)';   // grid line
+        
+        for (var xg = -x; xg < x; xg += this.gridSpacing) {
+            gl.moveTo( xg, -y );
+            gl.lineTo( xg, y );
+            gl.stroke();
+        }
+        for (var yg = -y; yg < y; yg += this.gridSpacing) {
+            gl.moveTo( -x, yg );
+            gl.lineTo( x, yg );
+            gl.stroke();
+        }
+        
+        gl.restore();  // pop colors, styles
+    }
+});
 
 TFT.App = DefineClass(
 {
@@ -138,6 +152,21 @@ TFT.App = DefineClass(
     start: function() {
         var app = this;
         Gfx.Animation.start( function() { app.draw(); });
+    },
+    stop:  function() {
+        Gfx.Animation.stop();
+    },
+
+    //----------------------------------------
+    togglePause: function() {
+
+        if (Gfx.Animation.isRunning()) {
+            $("#play_btn").text("Start");
+            this.stop();
+        } else {
+            $("#play_btn").text("Pause");
+            this.start();
+        }
     },
 
     //----------------------------------------
@@ -157,6 +186,11 @@ TFT.App = DefineClass(
         var app = this;
         $(document).keydown(
             function( e ) {
+                if (e.keyCode == 27) {  // esc
+                    app.togglePause();
+                    e.stopPropagation();
+                }
+
                 if (e.keyCode == 65) {  // 'a'
                     app.player1.turn('l');
                     e.stopPropagation();
@@ -175,6 +209,7 @@ TFT.App = DefineClass(
                 }
             }
         );
+        $("#play_btn").click( function() { app.togglePause(); } );
     },
 
     //----------------------------------------
@@ -221,10 +256,7 @@ TFT.App = DefineClass(
 
         $("#fps").text("fps=" + Gfx.Animation.fps + ",  delay=" +
                        Gfx.Animation.framePause + "ms, c = " +
-                       Gfx.Animation.frameCount +
-                       " 1 dir = " + this.player1.dir +
-                       " 2 dir = " + this.player2.dir );
-        
+                       Gfx.Animation.frameCount );        
 
         Gfx.Animation.frameDone();
     },
@@ -252,9 +284,8 @@ TFT.App = DefineClass(
         var viewXform  = new Gfx.Transform( cameraView );
         viewXform.add( new Gfx.Geode( this.field ));
         
-        // this makes two separate copies?  FIXME
-        viewXform.add( new Gfx.Geode( this.player1 ));
-        viewXform.add( new Gfx.Geode( this.player2 ));
+        viewXform.add( new Gfx.Geode( new TFT.PlayerGraphics( this.player1 )));
+        viewXform.add( new Gfx.Geode( new TFT.PlayerGraphics( this.player2 )));
 
         this.scene.add( viewXform );
     },
@@ -270,7 +301,7 @@ TFT.App = DefineClass(
 // crank this sucker up!
 $(document).ready( function() {
     var tft = new TFT.App();
-    tft.start();
+    tft.draw();  // just once
 });
 
 
