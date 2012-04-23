@@ -46,7 +46,7 @@ function renderItems( inItems, inContainer)
 $(document).ready(
     function(){
 
-        loadLayoutFromCookie( "layout", $("#dashboard-layout") );
+        loadLayoutFromCookie( "items", $("#dashboard-layout") );
 
         $('#dashboard-layout .widget-list').sortable(
             {
