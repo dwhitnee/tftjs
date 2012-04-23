@@ -2,7 +2,7 @@
 function getItems(container) {
     var columns = [];
  
-    $(container+ ' .column').each(
+    $(container+ ' .widget-list').each(
         function() {
             columns.push( $(this).sortable('toArray').join(','));
         });
