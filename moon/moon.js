@@ -109,7 +109,8 @@ function init(){
     // var bob = "http://img.thesun.co.uk/multimedia/archive/00626/SNF24BIZ5_280_626560a.jpg";
     // var bob = "http://s3.hubimg.com/u/44230_f260.jpg";
     var bob = "bob-med.png";
-    var blueMarble = "earth.jpg";
+    // var blueMarble = "earth.jpg";
+    var blueMarble = "blue-marble.gif";
 
     // var blueMarble = "http://daddysdown.com/wp-content/uploads/2011/04/earth.gif";
     // var blueMarble = "http://darwinbusters.com/images/008-earth-from-space-africa.jpg";
