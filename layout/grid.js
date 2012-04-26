@@ -1,3 +1,9 @@
+/**
+ * Let's make a draggable persistent layout of widgets!
+ * 
+ * Based on http://devheart.org/examples/jquery-customizable-layout-using-drag-and-drop/2-saving-and-loading-items/index.html#ex-2-1
+ */
+
 // Get all items from a container
 function getItems(container) {
     var columns = [];
@@ -25,20 +31,24 @@ function renderItems( inItems, inContainer)
     var html = '';
     var columns = inItems.split('|');
  
+    var first = "first";
+
     for ( var c in columns ) {
-        html += '<div class="column"><ul class="widget-list">';
- 
+        html += '<div class="column left ' + first + '"><ul class="widget-list">';
+        first = "";
+
         if ( columns[c] != '' ) {
             var items = columns[c].split(',');
  
             for ( var i in items ) {
-                html += '<li id="' + items[i] + '">Item ' + items[i] + '</li>';
+                html += '<li id="' + items[i] + 
+                    '" class="widget-container">Widget ' + items[i] + '</li>';
             }
         }
  
         html += '</ul></div>';
     }
- 
+    html += '<div class="clearer">&nbsp;</div>'; 
     inContainer.html( html );
 }
  
