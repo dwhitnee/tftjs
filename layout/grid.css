@@ -4,8 +4,7 @@ body {
 
 .left {    float: left;  }
 .right {   float: right; }
-.clear,
-.clearer { clear: both; }
+.clear,.clearer { clear: both; }
 .clearer {
     display: block;
     font-size: 0;
