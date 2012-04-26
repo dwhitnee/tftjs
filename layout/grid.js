@@ -26,30 +26,47 @@ function loadLayoutFromCookie( name, element ) {
     }
 }
  
-function renderItems( inItems, inContainer)
+// append list of divs repreenting the columns of the layout
+function renderItems( inItems, inContainer )
 {
-    var html = '';
+    var $layout = $("<div/>");
+
     var columns = inItems.split('|');
  
+    // first column needs to be identified for sortable?
     var first = "first";
 
     for ( var c in columns ) {
-        html += '<div class="column left ' + first + '"><ul class="widget-list">';
+
+        var $col = $('<div class="column left ' + first + '" />');
+        var $list = $('<ul class="widget-list"/>');
+        $col.append( $list );
+
         first = "";
 
         if ( columns[c] != '' ) {
             var items = columns[c].split(',');
  
             for ( var i in items ) {
-                html += '<li id="' + items[i] + 
-                    '" class="widget-container">Widget ' + items[i] + '</li>';
+
+                var $widgetContainer = $('<li/>').
+                    attr("id", items[i] ).
+                    addClass("widget-container");
+
+                // TODO: make me more interesting
+                var $widget = $('<span />').text(  "Widget " + items[i] );
+
+                $widgetContainer.append( $widget );
+                $list.append( $widgetContainer );
             }
         }
  
-        html += '</ul></div>';
+        $layout.append( $col );
     }
-    html += '<div class="clearer">&nbsp;</div>'; 
-    inContainer.html( html );
+    $layout.append( $('<div class="clearer" />') ); 
+
+    inContainer.empty();
+    inContainer.append( $layout );
 }
  
 
