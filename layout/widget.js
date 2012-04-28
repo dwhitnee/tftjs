@@ -10,16 +10,25 @@ Dashboard.Widget = DefineClass(
 
     size: { width: 1, height: 1 },
 
+    start: function() {
+        setLoading();
+        init();
+        // on("initialized", function() { this.draw(); }
+    },
+
     init:  function( data ) {
         if (data) {
             $.extend( this, data );
         }
+        // load any data?
+        
+        // fire("initialized");
     },
     
     // fill in widget div
     draw: function() {
         this.view.empty();
-        this.view.append("<div/>").text("yowza");
+        this.view.append("<div/>").text("I'm a widget");
     },
     
     // set widget to spinning
@@ -27,3 +36,30 @@ Dashboard.Widget = DefineClass(
         this.view.empty().append( this.loadingEl );
     }
 });
+
+
+Dashboard.Widget.ColorSquare = DefineClass( 
+    Dashboard.Widget,
+{
+    color: red,
+
+    render: function() {
+        this.view.css("background-color", color );
+    }
+}
+);
+
+
+
+// testing
+$(document).ready(
+    function() {
+        var w = new Dashboard.Widget.ColorSquare( 
+            {
+                color: blue
+                // container: $("#widget")
+            } );
+        $();
+    }
+);
+
