@@ -5,26 +5,32 @@ var Dashboard = {};
 //----------------------------------------------------------------------
 Dashboard.Widget = DefineClass(
 {
-    view:      $("<div/>").text("put widget here"),
-    loading:   $("<div/>").text("loading..."),  // make spinny
-
     size: { width: 1, height: 1 },
 
+    getEl: function() {  return this.view; },
     start: function() {
-        setLoading();
-        init();
+        this.setLoading();
         // on("initialized", function() { this.draw(); }
     },
 
+    // c'tor
     init:  function( data ) {
         if (data) {
             $.extend( this, data );
         }
+        this.view = $("<div/>").html("put widget here");
+        this.loadingView = $("<div/>").html("loading..."),  // make spinny
         // load any data?
+        this.start();
+        this.draw();
         
-        // fire("initialized");
+        // fire("initialized"); 
     },
-    
+
+    clear: function() {
+        this.view.empty();
+    },
+   
     // fill in widget div
     draw: function() {
         this.view.empty();
@@ -33,7 +39,8 @@ Dashboard.Widget = DefineClass(
     
     // set widget to spinning
     setLoading: function() {
-        this.view.empty().append( this.loadingEl );
+        this.clear();
+        this.view.append( this.loadingView );
     }
 });
 
@@ -41,10 +48,36 @@ Dashboard.Widget = DefineClass(
 Dashboard.Widget.ColorSquare = DefineClass( 
     Dashboard.Widget,
 {
-    color: red,
+    color: "red",
+    text: "Click me to change color",
+    colors: ["red", "green", "blue", "yellow", "teal", "wheat", "white"],
+    colorIndex: 0,
 
-    render: function() {
-        this.view.css("background-color", color );
+    init: function( data ) {
+        Dashboard.Widget.init.call( this, data );
+
+        this.view.css("width", this.size.width * 200 );
+        this.view.css("height", this.size.height * 200  );
+
+        var self = this;
+        $(this.view).on("click", this, 
+                        function( e ) {
+                            self.rotateColors.call( self );
+                        });
+    },
+
+    rotateColors: function( ) {
+        this.color = this.colors[this.colorIndex++];
+        if (this.colorIndex >= this.colors.length) {
+            this.colorIndex = 0;
+        }
+        this.draw();
+        // fire data update event
+    },
+
+    draw: function() {
+        this.view.css("background-color", this.color );
+        this.view.append("<div/>").text( this.text );
     }
 }
 );
@@ -54,12 +87,21 @@ Dashboard.Widget.ColorSquare = DefineClass(
 // testing
 $(document).ready(
     function() {
-        var w = new Dashboard.Widget.ColorSquare( 
+        var w1 = new Dashboard.Widget.ColorSquare( 
             {
-                color: blue
-                // container: $("#widget")
+                color: "lightblue",
+                size: { width: 2, height: 1},
+                text: "color widget 1"
             } );
-        $();
+        var w2 = new Dashboard.Widget.ColorSquare( 
+            {
+                color: "lightgreen",
+                text: "color widget 2"
+            } );
+
+        $("#widgetTest1").append( w1.getEl() );
+        $("#widgetTest2").append( w2.getEl() );
+
     }
 );
 
