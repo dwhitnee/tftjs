@@ -35,6 +35,8 @@ Dashboard.GridLayout = DefineClass(
         this.id = "gridlayout" + Dashboard.GridLayout.counter++,
         Dashboard.Widget.init.call( this, data );
 
+        this.restore();
+
         if (!this.widgetFactory ) {
             throw Error("No widgetFactory passed to Dashboard.GridLayout");
         }
@@ -74,7 +76,7 @@ Dashboard.GridLayout = DefineClass(
     },
 
     restore: function() {
-        this.widgetData = $.cookie( this.cookieName ); 
+        this.widgetData = $.cookie( this.cookieName ) || this.widgetData;;
     },
 
     // not to be confused with draw(), this builds the DOM
@@ -162,7 +164,8 @@ $(document).ready(
         var grid2 = new Dashboard.GridLayout( 
             {
                 widgetData: "Q,R|T,S|V",
-                widgetFactory: widgetFactory 
+                widgetFactory: widgetFactory ,
+                cookieName: "foo"
             } );
 
         $("#dashboard-layout1").append( grid1.getEl() );
