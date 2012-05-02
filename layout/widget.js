@@ -6,6 +6,7 @@ var Dashboard = Dashboard || {};
 Dashboard.Widget = DefineClass(
 {
     size: { width: 1, height: 1 },
+    text: "I'm a widget",
 
     getEl: function() {  return this.view; },
     start: function() {
@@ -21,7 +22,7 @@ Dashboard.Widget = DefineClass(
         this.view = $("<div/>").html("put widget here");
         // load any data?
         this.start();
-        this.render();
+        // this.render();
         
         // fire("initialized"); 
     },
@@ -34,7 +35,7 @@ Dashboard.Widget = DefineClass(
     // draw() might for animation
     render: function() {
         this.view.empty();
-        this.view.append("<div/>").text("I'm a widget");
+        this.view.append("<div/>").text( this.text );
     },
     
     // set widget to spinning
@@ -48,6 +49,29 @@ Dashboard.Widget = DefineClass(
     }
 });
 
+Dashboard.Widget.Factory = DefineClass( 
+{
+    widgets: {},
+    init: function() {
+        this.widgets.A = new Dashboard.Widget( { text: "Alligator" });
+        this.widgets.B = new Dashboard.Widget( { text: "Badger" });
+        this.widgets.C = new Dashboard.Widget( { text: "Coyote" });
+        this.widgets.D = new Dashboard.Widget( { text: "Dog" });
+        this.widgets.E = new Dashboard.Widget.ColorSquare( { text: "Zombo!" });
+    },
+
+    getWidgetByName: function( name ) {
+        if (this.widgets[name]) {
+            return this.widgets[name];
+        } else {
+            return new Dashboard.Widget( { text: "Unknown widget " + name });
+        }
+    }
+});
+
+
+// var $widget = $('<span />').text("Widget " + items[i] );
+//         return $('<span />').text(  "Widget " + items[i] );
 
 Dashboard.Widget.ColorSquare = DefineClass( 
     Dashboard.Widget,
@@ -60,6 +84,7 @@ Dashboard.Widget.ColorSquare = DefineClass(
     init: function( data ) {
         Dashboard.Widget.init.call( this, data );
 
+        // fit to parent?  FIXME
         this.view.css("width", this.size.width * 200 );
         this.view.css("height", this.size.height * 200  );
 
@@ -88,6 +113,8 @@ Dashboard.Widget.ColorSquare = DefineClass(
 
 
 
+
+
 // testing
 $(document).ready(
     function() {
@@ -106,6 +133,8 @@ $(document).ready(
         $("#widgetTest1").append( w1.getEl() );
         $("#widgetTest2").append( w2.getEl() );
 
+        w1.render();
+        w2.render();
     }
 );
 

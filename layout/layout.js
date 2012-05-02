@@ -1,9 +1,6 @@
-
 // (function dostuff_(global, $){
 //      var W = global.Widget = global.Widget || {};
-
 //      var myFunc = function() {  }
-     
 //      (function utils_bind(){
 // 	  this.util = W.util || {};
 // 	  this.util.myFunc = myFunc;
@@ -23,17 +20,38 @@ var Dashboard = Dashboard || {};
 Dashboard.GridLayout = DefineClass(
     Dashboard.Widget,
 {
+    // are these static/class variables?
+    editableColor: "#8D8",
+    fixedColor:    "#AFA",
+    widgetData:    undefined,
+    cookieName:   "gridlayout",
+    columnClass:  "widget-list",
+    widgetFactory: undefined,
+
     init: function( data ) {
-        this.widgetData = undefined;
-        this.cookieName = "gridlayout";
-        this.columnClass = "widget-list";
+        Dashboard.GridLayout.counter = Dashboard.GridLayout.counter || 1;
+
         this.id = "gridlayout" + Dashboard.GridLayout.counter++,
         Dashboard.Widget.init.call( this, data );
+
+        if (!this.widgetFactory ) {
+            throw Error("No widgetFactory passed to Dashboard.GridLayout");
+        }
+    },
+
+    // the builtin option is whether it is disabled, reverse that here.
+    toggleEditable: function() {
+        this.$columns.sortable("option", "disabled", this.isEditable() );
+        this.$columns.css("background", this.isEditable() ? 
+                          this.editableColor : this.fixedColor );
+    },
+    isEditable: function() {
+        return !this.$columns.sortable("option", "disabled");
     },
 
     serialize: function() {
         var columns = [];
-        this.view.find( "."+this.columnClass ).each(
+        this.$columns.each(
             function() {
                 columns.push( $(this).sortable('toArray').join(','));
             });
@@ -82,9 +100,10 @@ Dashboard.GridLayout = DefineClass(
                         addClass("widget-container");
 
                     // TODO: make me more interesting
-                    var $widget = $('<span />').text(  "Widget " + items[i] );
-
-                    $widgetContainer.append( $widget );
+                    var widget = this.widgetFactory.getWidgetByName( items[i]);
+                    widget.render();
+                    
+                    $widgetContainer.append( widget.getEl() );
                     $list.append( $widgetContainer );
                 }
             }
@@ -102,7 +121,9 @@ Dashboard.GridLayout = DefineClass(
     // connect all columns with this class, should 
     makeSortable: function() {
         var self = this;
-        this.view.find( "."+this.columnClass ).sortable(
+        
+        this.$columns = this.view.find( "."+this.columnClass );
+        this.$columns.sortable(
             {
                 // connectWith: '#dashboard-layout .widget-list',
                 // allow cross column dragging, but only in this Widget
@@ -117,25 +138,38 @@ Dashboard.GridLayout = DefineClass(
 
 });
 
-Dashboard.GridLayout.counter = 1;
-
 
 // testing
 $(document).ready(
     function() {
+        var widgetFactory = new Dashboard.Widget.Factory();
+
         var grid1 = new Dashboard.GridLayout( 
             {
-                widgetData: "D,E|C|B,A"
+                widgetData: "D,E|C|B,A",
+                widgetFactory: widgetFactory 
             } );
 
         var grid2 = new Dashboard.GridLayout( 
             {
-                widgetData: "Q,R|T,S|V"
+                widgetData: "Q,R|T,S|V",
+                widgetFactory: widgetFactory 
             } );
 
         $("#dashboard-layout1").append( grid1.getEl() );
         $("#dashboard-layout2").append( grid2.getEl() );
 
+        $("#edit-layout-button").click(
+            function(e) {
+                grid1.toggleEditable();
+                if (grid1.isEditable()) {
+                    $(this).text("Done Editing");
+                } else {
+                    $(this).text("Change layout");
+                }
+            });
+
+        // page is now laid out (with spinnies), finally do the work
         grid1.render();
         grid2.render();
     }
