@@ -78,8 +78,9 @@ Dashboard.Widget.SmoothieGraph = DefineClass(
         // doesnt work until layout done
         // this.width = this.view.width();
         // this.height = this.view.height();
-        this.$canvas = $('<canvas width="'+ this.width + 
-                         '" height="'+ this.height +'" />');
+        this.$canvas = $('<canvas/>').
+            attr("width", this.width).
+            attr("height", this.height );
 
         var div = $("<div/>");
         div.append( this.$canvas );
