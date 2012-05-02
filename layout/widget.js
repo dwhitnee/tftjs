@@ -1,4 +1,4 @@
-var Dashboard = {};
+var Dashboard = Dashboard || {};
 
 //----------------------------------------------------------------------
 // Basic widget that has a view div that can be drawn into
@@ -10,7 +10,7 @@ Dashboard.Widget = DefineClass(
     getEl: function() {  return this.view; },
     start: function() {
         this.setLoading();
-        // on("initialized", function() { this.draw(); }
+        // on("initialized", function() { this.render(); }
     },
 
     // c'tor
@@ -19,10 +19,9 @@ Dashboard.Widget = DefineClass(
             $.extend( this, data );
         }
         this.view = $("<div/>").html("put widget here");
-        this.loadingView = $("<div/>").html("loading..."),  // make spinny
         // load any data?
         this.start();
-        this.draw();
+        this.render();
         
         // fire("initialized"); 
     },
@@ -31,14 +30,19 @@ Dashboard.Widget = DefineClass(
         this.view.empty();
     },
    
-    // fill in widget div
-    draw: function() {
+    // Build the DOM for the widget, this wont be called often like a
+    // draw() might for animation
+    render: function() {
         this.view.empty();
         this.view.append("<div/>").text("I'm a widget");
     },
     
     // set widget to spinning
     setLoading: function() {
+
+        if (!this.loadingView) {
+            this.loadingView = $("<div/>").html("loading...");  // make spinny
+        }
         this.clear();
         this.view.append( this.loadingView );
     }
@@ -71,11 +75,11 @@ Dashboard.Widget.ColorSquare = DefineClass(
         if (this.colorIndex >= this.colors.length) {
             this.colorIndex = 0;
         }
-        this.draw();
+        this.render();
         // fire data update event
     },
 
-    draw: function() {
+    render: function() {
         this.view.css("background-color", this.color );
         this.view.append("<div/>").text( this.text );
     }

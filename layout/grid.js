@@ -20,14 +20,14 @@ function getItems(container) {
 function loadLayoutFromCookie( name, element ) {
     var data = $.cookie(name); 
     if ( data != null ) {
-        renderItems( data, element );
+        renderLayout( data, element );
     } else {
         // alert('No items saved in "' + name + '".');
     }
 }
  
 // append list of divs repreenting the columns of the layout
-function renderItems( inItems, inContainer )
+function renderLayout( inItems, inContainer )
 {
     var $layout = $("<div/>");
 
