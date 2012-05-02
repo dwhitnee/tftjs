@@ -15,3 +15,15 @@
     text-align: center;
 }
 
+.Widget-SmoothieGraph {
+    padding: 2px;
+    background: lightgray;
+}
+.Widget-SmoothieGraph > div {
+    overflow-x: auto;   /* scroll bars */
+    overflow-y: hidden;
+    margin: auto;     /* center */
+    height: 100%;
+}
+.Widget-SmoothieGraph canvas {
+}

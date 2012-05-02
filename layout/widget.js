@@ -54,20 +54,17 @@ Dashboard.Widget = DefineClass(
     }
 });
 
-Dashboard.Widget.prototype.getName = function() { 
-   var funcNameRegex = /function (.{1,})\(/;
-   var results = (funcNameRegex).exec((this).constructor.toString());
-   return (results && results.length > 1) ? results[1] : "";
-};
 
+//----------------------------------------------------------------------
 Dashboard.Widget.Factory = DefineClass( 
 {
     widgets: {},
     init: function() {
-        this.widgets.A = new Dashboard.Widget( { text: "Alligator" });
+        this.widgets.A = new Dashboard.Widget.SmoothieGraph();
+        // this.widgets.A = new Dashboard.Widget( { text: "Alligator" });
         this.widgets.B = new Dashboard.Widget( { text: "Badger" });
         this.widgets.C = new Dashboard.Widget( { text: "Coyote" });
-        this.widgets.D = new Dashboard.Widget( { text: "Dog" });
+        this.widgets.D = new Dashboard.Widget.SmoothieGraph();
         this.widgets.E = new Dashboard.Widget.ColorSquare( { text: "Zombo! (click me)" });
     },
 
@@ -81,9 +78,10 @@ Dashboard.Widget.Factory = DefineClass(
 });
 
 
-// var $widget = $('<span />').text("Widget " + items[i] );
-//         return $('<span />').text(  "Widget " + items[i] );
 
+//----------------------------------------------------------------------
+//  simple coloe cycler on click
+//----------------------------------------------------------------------
 Dashboard.Widget.ColorSquare = DefineClass( 
     Dashboard.Widget,
 {
