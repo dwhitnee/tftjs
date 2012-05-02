@@ -1,0 +1,17 @@
+/* Styles for common widget types */
+
+.Widget {
+    text-align: center;
+    display: block;
+    font-weight: bold;
+    padding: 2em 0;
+}
+
+.Widget-ColorSquare {
+    height: 100%;
+    width: 100%;
+    line-height: 10em;
+    font-weight: bold;
+    text-align: center;
+}
+

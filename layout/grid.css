@@ -22,8 +22,8 @@ body {
 .column.first {
     margin-left: 0;
 }
+
 .widget-list {
-    background-color: #8D8;
     list-style: none outside none;
     margin: 0;
     min-height: 300px;
@@ -32,23 +32,8 @@ body {
 .widget-container {
     background-color: #FFFFFF;
     border: 1px solid #000000;
-    cursor: move;
-    display: block;
-    font-weight: bold;
     margin-bottom: 5px;
-    padding: 20px 0;
-    text-align: center;
-    min-height: 200px;
-}
-
-#dashboard-layout {
-    background-color: #FFFFAA;
-    height: 1000px;
-}
-
-.dashboard {
-    background-color: #AFA;
-    padding: 1em;
+    height: 200px;
 }
 
 /* the interstitial box we're dragging to */
@@ -57,4 +42,15 @@ body {
     border: 1px dashed #666666;
     /*     height: 100px; */
     margin-bottom: 5px;
+}
+
+
+
+#dashboard-layout {
+    background-color: #FFA;
+    height: 1000px;
+}
+.dashboard {
+    background-color: #AFA;
+    padding: 1em;
 }

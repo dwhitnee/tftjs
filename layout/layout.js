@@ -21,6 +21,7 @@ Dashboard.GridLayout = DefineClass(
     Dashboard.Widget,
 {
     // are these static/class variables?
+    type: "GridLayout",   // can we get this dynamically?
     editableColor: "#8D8",
     fixedColor:    "#AFA",
     widgetData:    undefined,
@@ -42,8 +43,15 @@ Dashboard.GridLayout = DefineClass(
     // the builtin option is whether it is disabled, reverse that here.
     toggleEditable: function() {
         this.$columns.sortable("option", "disabled", this.isEditable() );
-        this.$columns.css("background", this.isEditable() ? 
-                          this.editableColor : this.fixedColor );
+
+        if (this.isEditable()) {
+            this.$columns.css("background", this.editableColor );
+            this.view.find(".widget-container").css("cursor", "move");
+        } else {
+            this.$columns.css("background", this.fixedColor );
+            this.view.find(".widget-container").css("cursor", "auto");
+        }
+
     },
     isEditable: function() {
         return !this.$columns.sortable("option", "disabled");
@@ -95,9 +103,9 @@ Dashboard.GridLayout = DefineClass(
                 
                 for ( var i in items ) {
 
-                    var $widgetContainer = $('<li/>').
-                        attr("id", items[i] ).
-                        addClass("widget-container");
+                    var $widgetContainer = 
+                        $('<li class="widget-container"/>').
+                        attr("id", items[i] );
 
                     // TODO: make me more interesting
                     var widget = this.widgetFactory.getWidgetByName( items[i]);
@@ -116,6 +124,7 @@ Dashboard.GridLayout = DefineClass(
         this.view.append( $layout );
 
         this.makeSortable();
+        this.toggleEditable();
     },
 
     // connect all columns with this class, should 
@@ -172,6 +181,8 @@ $(document).ready(
         // page is now laid out (with spinnies), finally do the work
         grid1.render();
         grid2.render();
+
+        grid2.toggleEditable();
     }
 );
 

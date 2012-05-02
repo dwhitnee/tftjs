@@ -5,6 +5,7 @@ var Dashboard = Dashboard || {};
 //----------------------------------------------------------------------
 Dashboard.Widget = DefineClass(
 {
+    // type: "Widget",
     size: { width: 1, height: 1 },
     text: "I'm a widget",
 
@@ -19,12 +20,16 @@ Dashboard.Widget = DefineClass(
         if (data) {
             $.extend( this, data );
         }
-        this.view = $("<div/>").html("put widget here");
+        var type = this.type || "Widget";
+        this.view = $('<div class="'+ type +'"/>').html("put widget here");
         // load any data?
         this.start();
+        
+        // render should be called later manually to speed apparent display
+        // that is, do the complex stuff post initial display
         // this.render();
         
-        // fire("initialized"); 
+        // do ajax then fire("initialized");   ?
     },
 
     clear: function() {
@@ -49,6 +54,12 @@ Dashboard.Widget = DefineClass(
     }
 });
 
+Dashboard.Widget.prototype.getName = function() { 
+   var funcNameRegex = /function (.{1,})\(/;
+   var results = (funcNameRegex).exec((this).constructor.toString());
+   return (results && results.length > 1) ? results[1] : "";
+};
+
 Dashboard.Widget.Factory = DefineClass( 
 {
     widgets: {},
@@ -57,7 +68,7 @@ Dashboard.Widget.Factory = DefineClass(
         this.widgets.B = new Dashboard.Widget( { text: "Badger" });
         this.widgets.C = new Dashboard.Widget( { text: "Coyote" });
         this.widgets.D = new Dashboard.Widget( { text: "Dog" });
-        this.widgets.E = new Dashboard.Widget.ColorSquare( { text: "Zombo!" });
+        this.widgets.E = new Dashboard.Widget.ColorSquare( { text: "Zombo! (click me)" });
     },
 
     getWidgetByName: function( name ) {
@@ -76,6 +87,7 @@ Dashboard.Widget.Factory = DefineClass(
 Dashboard.Widget.ColorSquare = DefineClass( 
     Dashboard.Widget,
 {
+    type: "Widget-ColorSquare",
     color: "red",
     text: "Click me to change color",
     colors: ["red", "green", "blue", "yellow", "teal", "wheat", "white"],
@@ -85,8 +97,8 @@ Dashboard.Widget.ColorSquare = DefineClass(
         Dashboard.Widget.init.call( this, data );
 
         // fit to parent?  FIXME
-        this.view.css("width", this.size.width * 200 );
-        this.view.css("height", this.size.height * 200  );
+        // this.view.css("width", this.size.width * 200 );
+        // this.view.css("height", this.size.height * 200  );
 
         var self = this;
         $(this.view).on("click", this, 
