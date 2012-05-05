@@ -32,7 +32,7 @@ Dashboard.GridLayout = DefineClass(
     init: function( data ) {
         Dashboard.GridLayout.counter = Dashboard.GridLayout.counter || 1;
 
-        this.id = "gridlayout" + Dashboard.GridLayout.counter++,
+        this.id = "gridlayout" + Dashboard.GridLayout.counter++;
         Dashboard.Widget.init.call( this, data );
 
         this.restore();
@@ -89,16 +89,11 @@ Dashboard.GridLayout = DefineClass(
 
         var columns = this.widgetData.split('|');
  
-        // first column needs to be identified for sortable?
-        var first = "first";
-
         for ( var c in columns ) {
 
-            var $col = $('<div class="column left ' + first + '" />');
+            var $col = $('<div class="column left" />');
             var $list = $('<ul class="' + this.columnClass + '"/>');
             $col.append( $list );
-
-            first = "";
 
             if ( columns[c] != '' ) {
                 var items = columns[c].split(',');

@@ -19,7 +19,7 @@ body {
     margin-left: 2%;
     width: 32%;
 }
-.column.first {
+.column:first-child {
     margin-left: 0;
 }
 
