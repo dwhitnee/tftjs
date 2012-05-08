@@ -1,0 +1,53 @@
+<html>
+<head>
+  <link media="screen" href="widget.css" type="text/css" rel="stylesheet">
+</head>
+
+<body>
+  <button id="edit-layout-button">Change layout</button>
+  <div id="dashboard-layout1" class="dashboard"></div>
+  <hr/>
+  <div id="dashboard-layout2" class="dashboard"></div>
+
+
+  <!-- ============================================================ -->
+  <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+  <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.18/jquery-ui.min.js"></script>
+  <script type="text/javascript" src="https://raw.github.com/carhartl/jquery-cookie/master/jquery.cookie.js"></script>
+  <script type="text/javascript" src="http://smoothiecharts.org/smoothie.js"></script>
+
+  <script type="text/javascript" src="../../util/util.js"></script>
+  <script type="text/javascript" src="widget.js"></script>
+  <script type="text/javascript" src="widgetFactory.js"></script>
+  <script type="text/javascript" src="smoothieGraph.js"></script>
+
+
+  <script type="text/javascript">
+
+// testing
+$(document).ready(
+    function() {
+        var w1 = new Dashboard.Widget.ColorSquare(
+            {
+                color: "lightblue",
+                size: { width: 2, height: 1},
+                text: "color widget 1"
+            } );
+        var w2 = new Dashboard.Widget.ColorSquare(
+            {
+                color: "lightgreen",
+                text: "color widget 2"
+            } );
+
+        $("#widgetTest1").append( w1.getEl() );
+        $("#widgetTest2").append( w2.getEl() );
+
+        w1.render();
+        w2.render();
+    }
+);
+
+</script>
+
+</body>
+</html>

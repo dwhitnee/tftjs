@@ -1,0 +1,73 @@
+<html>
+<head>
+  <link media="screen" href="widget.css" type="text/css" rel="stylesheet">
+</head>
+
+<body>
+  <button id="edit-layout-button">Change layout</button>
+  <div id="dashboard-layout1" class="dashboard"></div>
+  <hr/>
+  <div id="dashboard-layout2" class="dashboard"></div>
+
+
+  <!-- ============================================================ -->
+  <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+  <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.18/jquery-ui.min.js"></script>
+  <script type="text/javascript" src="https://raw.github.com/carhartl/jquery-cookie/master/jquery.cookie.js"></script>
+  <script type="text/javascript" src="http://smoothiecharts.org/smoothie.js"></script>
+
+  <script type="text/javascript" src="../../util/util.js"></script>
+  <script type="text/javascript" src="../layout.js"></script>
+  <script type="text/javascript" src="widget.js"></script>
+  <script type="text/javascript" src="colorSquare.js"></script>
+
+  <script type="text/javascript" src="widgetFactory.js"></script>
+  <script type="text/javascript" src="smoothieGraph.js"></script>
+
+
+  <script type="text/javascript">
+
+// testing
+$(document).ready(
+    function() {
+        var widgetFactory = new Dashboard.Widget.Factory();
+
+        var grid1 = new Dashboard.GridLayout(
+            {
+                widgetData: "D,E|C|B,A",
+                widgetFactory: widgetFactory
+            } );
+
+        var grid2 = new Dashboard.GridLayout(
+            {
+                widgetData: "Q,R|T,S|V",
+                widgetFactory: widgetFactory ,
+                cookieName: "foo"
+            } );
+
+        $("#dashboard-layout1").append( grid1.getEl() );
+        $("#dashboard-layout2").append( grid2.getEl() );
+
+        $("#edit-layout-button").click(
+            function(e) {
+                grid1.toggleEditable();
+                if (grid1.isEditable()) {
+                    $(this).text("Done Editing");
+                } else {
+                    $(this).text("Change layout");
+                }
+            });
+
+        // page is now laid out (with spinnies), finally do the work
+        grid1.render();
+        grid2.render();
+
+        grid2.toggleEditable();
+    }
+);
+
+
+</script>
+
+</body>
+</html>

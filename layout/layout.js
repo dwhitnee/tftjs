@@ -146,6 +146,7 @@ Dashboard.GridLayout = DefineClass(
 
 
 // testing
+/*
 $(document).ready(
     function() {
         var widgetFactory = new Dashboard.Widget.Factory();
@@ -184,3 +185,4 @@ $(document).ready(
     }
 );
 
+*/
