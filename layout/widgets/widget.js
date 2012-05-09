@@ -5,9 +5,10 @@ var Dashboard = Dashboard || {};
 //----------------------------------------------------------------------
 Dashboard.Widget = DefineClass(
 {
-    // type: "Widget",
+    type: "Widget",
     size: { width: 1, height: 1 },
     text: "I'm a widget",
+    id: 0,
 
     getEl: function() {  return this.view; },
     start: function() {

@@ -11,7 +11,7 @@ Dashboard.Widget.Factory = DefineClass(
     init: function() {
 
         // we could just eval( widget.name ) but that's evil and scary
-        // map canned names to actaul objects
+        // map predefined names to actual objects
         this.widgetTypes = {
             "text"          : "Dashboard.Widget",
             "colorSquare"   : "Dashboard.Widget.ColorSquare",
@@ -30,11 +30,11 @@ Dashboard.Widget.Factory = DefineClass(
             var widgetDesc = this._getWidgetConfig( id );
              if (widgetDesc) {
                 this.widgets[ id ] =
-                     this._buildWidget( widgetDesc.name, widgetDesc.data );
+                     this._buildWidget( widgetDesc.type, widgetDesc.data, id );
             } else {
                 this.widgets[ id ] =
                      this._buildWidget("text",
-                                       { text: "Unknonwn widget: " + id});
+                                       { text: "Unknown widget: " + id});
 
                 // throw new Error("Unknown widget id: ", id);
             }
@@ -45,13 +45,20 @@ Dashboard.Widget.Factory = DefineClass(
     /**
      *  given a name like "colorSquare", create a widget of that type
      */
-    _buildWidget: function( className, data ) {
+    _buildWidget: function( className, data, id ) {
 
+        data.id = id;
         var widgetClass = this.widgetTypes[className] || "Dashboard.Widget";
 
         // eval is evil, but we are getting the function name from
-        // our local store at least.
-        return eval("new " + widgetClass + "( data )");
+        // our local list at least.
+        try {
+            return eval("new " + widgetClass + "( data )");
+        } 
+        catch (ex) {
+            return new Dashboard.Widget( 
+                { text: "Failed to create widget " + className } );
+        }
     },
 
 
@@ -62,23 +69,26 @@ Dashboard.Widget.Factory = DefineClass(
 
         var widgetStore = {
             "1": {
-                name: "smoothieGraph",
+                type: "smoothieGraph",
                 data: {}
             },
             "2": {
-                name: "text",
+                type: "text",
                 data: { "text": "Badger" }
             },
             "3": {
-                name: "text",
-                data: { "text": "Coyote" }
+                type: "ec2Instance",
+                data: { 
+                    "text": "Wacka Wacka",
+                    instanceId: "i-1234"
+                }
             },
             "4": {
-                name: "smoothieGraph",
+                type: "smoothieGraph",
                 data: {}
             },
             "5": {
-                name: "colorSquare",
+                type: "colorSquare",
                 data: { "text": "Zomboe! (click me)" }
             }
         };
