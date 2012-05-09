@@ -2,8 +2,8 @@
 //      var W = global.Widget = global.Widget || {};
 //      var myFunc = function() {  }
 //      (function utils_bind(){
-// 	  this.util = W.util || {};
-// 	  this.util.myFunc = myFunc;
+//        this.util = W.util || {};
+//        this.util.myFunc = myFunc;
 //       }).apply(W);
 
 //  })(this, jQuery||{});
@@ -21,10 +21,10 @@ Dashboard.GridLayout = DefineClass(
     Dashboard.Widget,
 {
     // are these static/class variables?
-    type: "GridLayout",   // can we get this dynamically?
+    type: "GridLayout",   // can we get this dynamically? apparently not. TODO
     editableColor: "#8D8",
     fixedColor:    "#AFA",
-    widgetData:    undefined,
+    layoutData:    undefined,
     cookieName:   "gridlayout",
     columnClass:  "widget-list",
     widgetFactory: undefined,
@@ -65,7 +65,7 @@ Dashboard.GridLayout = DefineClass(
             function() {
                 columns.push( $(this).sortable('toArray').join(','));
             });
- 
+
         return columns.join('|');
     },
 
@@ -76,7 +76,7 @@ Dashboard.GridLayout = DefineClass(
     },
 
     restore: function() {
-        this.widgetData = $.cookie( this.cookieName ) || this.widgetData;;
+        this.layoutData = $.cookie( this.cookieName ) || this.layoutData;
     },
 
     // not to be confused with draw(), this builds the DOM
@@ -85,10 +85,10 @@ Dashboard.GridLayout = DefineClass(
         // this we will add when done massaging DOM
         var $layout = $('<div id="'+this.id+'"/>');
 
-        if (!this.widgetData) { return; }
+        if (!this.layoutData) { return; }
 
-        var columns = this.widgetData.split('|');
- 
+        var columns = this.layoutData.split('|');
+
         for ( var c in columns ) {
 
             var $col = $('<div class="column left" />');
@@ -97,25 +97,25 @@ Dashboard.GridLayout = DefineClass(
 
             if ( columns[c] != '' ) {
                 var items = columns[c].split(',');
-                
+
                 for ( var i in items ) {
 
-                    var $widgetContainer = 
+                    var $widgetContainer =
                         $('<li class="widget-container"/>').
                         attr("id", items[i] );
 
                     // TODO: make me more interesting
-                    var widget = this.widgetFactory.getWidgetByName( items[i]);
+                    var widget = this.widgetFactory.getWidgetById( items[i]);
                     widget.render();
-                    
+
                     $widgetContainer.append( widget.getEl() );
                     $list.append( $widgetContainer );
                 }
             }
-            
+
             $layout.append( $col );
         }
-        $layout.append( $('<div class="clearer" />') ); 
+        $layout.append( $('<div class="clearer" />') );
 
         this.view.empty();
         this.view.append( $layout );
@@ -124,10 +124,10 @@ Dashboard.GridLayout = DefineClass(
         this.toggleEditable();
     },
 
-    // connect all columns with this class, should 
+    // connect all columns with this class, should
     makeSortable: function() {
         var self = this;
-        
+
         this.$columns = this.view.find( "."+this.columnClass );
         this.$columns.sortable(
             {
@@ -137,7 +137,7 @@ Dashboard.GridLayout = DefineClass(
                 placeholder: 'placeholder',
                 forcePlaceholderSize: true,
                 update: function(e, ui) { self.save();  }
-                // grid: [50, 20] 
+                // grid: [50, 20]
             }
         );
         }
@@ -151,15 +151,15 @@ $(document).ready(
     function() {
         var widgetFactory = new Dashboard.Widget.Factory();
 
-        var grid1 = new Dashboard.GridLayout( 
+        var grid1 = new Dashboard.GridLayout(
             {
-                widgetData: "D,E|C|B,A",
-                widgetFactory: widgetFactory 
+                layoutData: "D,E|C|B,A",
+                widgetFactory: widgetFactory
             } );
 
-        var grid2 = new Dashboard.GridLayout( 
+        var grid2 = new Dashboard.GridLayout(
             {
-                widgetData: "Q,R|T,S|V",
+                layoutData: "Q,R|T,S|V",
                 widgetFactory: widgetFactory ,
                 cookieName: "foo"
             } );

@@ -1,6 +1,7 @@
 <html>
 <head>
-  <link media="screen" href="widget.css" type="text/css" rel="stylesheet">
+  <link media="screen" href="widgets/widget.css" type="text/css" rel="stylesheet">
+  <link media="screen" href="layout.css" type="text/css" rel="stylesheet">
 </head>
 
 <body>
@@ -16,13 +17,15 @@
   <script type="text/javascript" src="https://raw.github.com/carhartl/jquery-cookie/master/jquery.cookie.js"></script>
   <script type="text/javascript" src="http://smoothiecharts.org/smoothie.js"></script>
 
-  <script type="text/javascript" src="../../util/util.js"></script>
-  <script type="text/javascript" src="../layout.js"></script>
-  <script type="text/javascript" src="widget.js"></script>
-  <script type="text/javascript" src="colorSquare.js"></script>
+  <script type="text/javascript" src="../util/util.js"></script>
 
-  <script type="text/javascript" src="widgetFactory.js"></script>
-  <script type="text/javascript" src="smoothieGraph.js"></script>
+  <script type="text/javascript" src="widgets/widget.js"></script>
+  <script type="text/javascript" src="widgets/colorSquare.js"></script>
+  <script type="text/javascript" src="widgets/smoothieGraph.js"></script>
+  <script type="text/javascript" src="widgets/widgetFactory.js"></script>
+
+  <script type="text/javascript" src="layouts/gridLayout.js"></script>
+
 
 
   <script type="text/javascript">
@@ -34,13 +37,13 @@ $(document).ready(
 
         var grid1 = new Dashboard.GridLayout(
             {
-                widgetData: "D,E|C|B,A",
+                layoutData: "4,5|3|2,1",
                 widgetFactory: widgetFactory
             } );
 
         var grid2 = new Dashboard.GridLayout(
             {
-                widgetData: "Q,R|T,S|V",
+                layoutData: "10,11|12,13|14",
                 widgetFactory: widgetFactory ,
                 cookieName: "foo"
             } );
