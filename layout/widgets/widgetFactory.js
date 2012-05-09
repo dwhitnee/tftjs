@@ -79,8 +79,12 @@ Dashboard.Widget.Factory = DefineClass(
             "3": {
                 type: "ec2Instance",
                 data: { 
-                    "text": "Wacka Wacka",
-                    instanceId: "i-1234"
+                    "instance" : {
+                        instanceId: "i-1234",
+                        name: "Smurf Server",
+                        volumes: ["disk1","disk2"],
+                        eip: "172.154.3.12"
+                    }
                 }
             },
             "4": {

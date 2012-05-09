@@ -1,6 +1,6 @@
 /* Styles for common widget types */
 
-.Widget {
+.Widget-Text {
     text-align: center;
     display: block;
     font-weight: bold;
@@ -19,6 +19,19 @@
     padding: 2px;
     background: lightgray;
 }
+.Widget-EC2Instance {
+    background: lightblue;
+    height: 100%;
+    position: relative;
+}
+.Widget-EC2Instance .inner {
+    padding: 5px;
+}
+.Widget-EC2Instance .buttonBar {
+    vertical-align: bottom;
+    position: absolute;
+    bottom: 5px;
+}
 .Widget-SmoothieGraph > div {
     overflow-x: auto;   /* scroll bars */
     overflow-y: hidden;
@@ -26,4 +39,18 @@
     height: 100%;
 }
 .Widget-SmoothieGraph canvas {
+}
+
+.widget .settings {
+    padding: 5px;
+}
+
+.settingsToggle {
+    position: absolute;
+    top: 5;
+    right: 5;
+}
+.widget .settings .title {
+    font-weight: bold;
+    padding-bottom: .5em;
 }

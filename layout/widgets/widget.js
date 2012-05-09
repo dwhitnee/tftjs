@@ -22,7 +22,7 @@ Dashboard.Widget = DefineClass(
             $.extend( this, data );
         }
         var type = this.type || "Widget";
-        this.view = $('<div class="'+ type +'"/>').html("put widget here");
+        this.view = $('<div class="widget '+ type +'"/>').html("put widget here");
         // load any data?
         this.start();
         
