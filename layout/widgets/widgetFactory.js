@@ -79,12 +79,7 @@ Dashboard.Widget.Factory = DefineClass(
             "3": {
                 type: "ec2Instance",
                 data: { 
-                    "instance" : {
-                        instanceId: "i-1234",
-                        name: "Smurf Server",
-                        volumes: ["disk1","disk2"],
-                        eip: "172.154.3.12"
-                    }
+                    instanceId: "i-ebe9e488"
                 }
             },
             "4": {
@@ -93,7 +88,7 @@ Dashboard.Widget.Factory = DefineClass(
             },
             "5": {
                 type: "colorSquare",
-                data: { "text": "Zomboe! (click me)" }
+                data: { "text": "Zombo (anything is possible!)" }
             }
         };
 

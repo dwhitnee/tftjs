@@ -1,5 +1,16 @@
 /* Styles for common widget types */
 
+.loading {
+    text-align: center;
+    line-height: 4em;
+}
+
+.error {
+    text-align: center;
+    line-height: 4em;
+    color: red;
+}
+
 .Widget-Text {
     text-align: center;
     display: block;
@@ -27,6 +38,27 @@
 .Widget-EC2Instance .inner {
     padding: 5px;
 }
+.Widget-EC2Instance .title {
+    font-weight: bold;
+    color: #666;
+}
+
+.Widget-EC2Instance .type {
+    font-size: small;
+}
+.Widget-EC2Instance .devices li {
+    font-size: small;
+    padding-left: 1em;
+}
+
+
+.Widget-EC2Instance .running { color: green; }
+.Widget-EC2Instance .pending { color: yellow; }
+.Widget-EC2Instance .shutting-down,
+.Widget-EC2Instance .terminated,
+.Widget-EC2Instance .stopping,
+.Widget-EC2Instance .stopped { color: red; }
+
 .Widget-EC2Instance .buttonBar {
     vertical-align: bottom;
     position: absolute;

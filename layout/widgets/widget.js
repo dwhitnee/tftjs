@@ -48,7 +48,8 @@ Dashboard.Widget = DefineClass(
     setLoading: function() {
 
         if (!this.loadingView) {
-            this.loadingView = $("<div/>").html("loading...");  // make spinny
+            // TODO make spinny
+            this.loadingView = $('<div class="loading"/>').html("loading...");
         }
         this.clear();
         this.view.append( this.loadingView );

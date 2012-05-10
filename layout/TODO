@@ -1,0 +1,16 @@
+Viewless DataWidget?
+ - that just provide data as an output to some other widget
+
+Widget palette
+wiring diagram
+
+choice of layouts
+ 2 col (1x2)
+ 3 col (1x1)
+ bag random asortment?
+
+
+Data model or data widget?
+listener/notifier pattern (vs events?)
+
+
