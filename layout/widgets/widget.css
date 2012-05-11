@@ -57,7 +57,7 @@
 .Widget-EC2Instance .shutting-down,
 .Widget-EC2Instance .terminated,
 .Widget-EC2Instance .stopping,
-.Widget-EC2Instance .stopped { color: red; }
+.Widget-EC2Instance .stopped { color: red; font-weight: bold; }
 
 .Widget-EC2Instance .buttonBar {
     vertical-align: bottom;

@@ -2,16 +2,17 @@ var Dashboard = Dashboard || {};
 
 //----------------------------------------------------------------------
 // Display basic EC2 instace info.
-// 
+//
 // This screams for a Model object with "onDataLoaded" notifications
 //----------------------------------------------------------------------
-Dashboard.Widget.EC2Instance = DefineClass( 
+Dashboard.Widget.EC2Instance = DefineClass(
     Dashboard.Widget,
 {
     type: "Widget-EC2Instance",
     text: "Click me to change color",
     settingsMode: false,
 
+    //----------------------------------------
     init: function( data ) {
         Dashboard.Widget.init.call( this, data );
 
@@ -20,12 +21,10 @@ Dashboard.Widget.EC2Instance = DefineClass(
         this._buildSettingsToggle();
 
         this.loadInstances();
-
-        // listen for dataLoaded and populate this.instance
     },
 
     setInstance: function( instanceId ) {
-        this.instance = this.instances[ instanceId ];
+        this.instance = this.instances.getData( instanceId );
         this.instanceId = instanceId;
     },
 
@@ -50,82 +49,51 @@ Dashboard.Widget.EC2Instance = DefineClass(
             attr("src", icon);
     },
 
-    // jsonp ftw!
     loadInstances: function() {
-        this.server = "https://dwhitney.desktop.amazon.com:6253/x/sdk";
-        this.ec2 = {};
-        this.ec2.describeAZs = "/ec2/describeAvailabilityZones?";
-        this.ec2.describeInstances = "/ec2/describeInstances?";
+        // should be wired up in Controller, not here.
+        this.instances = new AWS.EC2.Instances();
 
-        var url = this.server + this.ec2.describeInstances;
-
-        // no failure handler
-        // $.getJSON( url + "&callback=?", args, handleInstanceResponse);
-
-        var args = {};  // instanceId=foo ?
-        $.ajax({
-                   url: url, // + "&callback=?",
-                   dataType: 'jsonp',
-                   data: args,
-                   context: this,
-                   success: this.handleInstanceResponse,
-                   error: this.handleError
-               }
-              );
-
-    },
-
-    handleInstanceResponse: function( response ) {
-        this.instances = {};
-        
-        // this doesn't work with jsonp, would need foo( { error: "doh!" } );
-        this.checkForErrors( response );
-        
-        // pull reservations.instances into map
-        var self = this;
-        $.each( response.reservations || {},
-                function( i, reservation ) {
-                    $.each( reservation.instances,
-                            function( j, instance ) {
-                                self.instances[ instance.instanceId ] =
-                                    instance;
-                            });
-                });
-        
-        // dataListeners.notify();
-        // $.trigger("dataLoaded");
-        // this should fire an event, or notify listeners that they
-        // can take action on the instanceList.
-        
-        this.handleDataLoaded();
+        this.instances.addListener(
+            {
+                context: this,
+                success: this.handleDataLoaded
+            } );
     },
 
     checkForErrors: function( response ) {
         if (response.error) {
-            this.handleError( response.error );   
+            this.handleError( response.error );
         }
     },
 
+    //----------------------------------------
     // unfortunately with jsonp, the error message needs to be jsonp as well
     // so we can't display raw error results
+    //----------------------------------------
     handleError: function( req, msg, error ) {
         this.loading = false;
         this.view.empty();
         this.view.append( $('<div class="error"/>').text("d'oh!: " + msg) );
     },
 
+    //----------------------------------------
+    // target of Model.notifyListeners("update")
+    //----------------------------------------
     handleDataLoaded: function() {
 
         // stop spinning
-        this.loading = false; 
-       
+        this.loading = false;
+
         // display data if selected
         if (this.instanceId) {
             this.setInstance( this.instanceId );
         }
         this.render();
     },
-   
+
+    //----------------------------------------
+    // entry point to rendering the widget
+    //----------------------------------------
     render: function() {
         var $div;
 
@@ -141,20 +109,23 @@ Dashboard.Widget.EC2Instance = DefineClass(
         this.view.append( $div );
     },
 
+    //----------------------------------------
+    // display UI to select an instance
+    //----------------------------------------
     renderSettingsView: function() {
         var $div = $('<div class="settings">');
-        
+
         $div.append( $('<div class="title"/>').text("Settings") );
 
         var $menu = $("<select>");
 
         var self = this;
-        $.each( this.instances || {},
+        $.each( this.instances.getData() || {},
                 function( instanceId, instance ) {
-                    // or tag if it exists
-                    var name = self.getInstanceName( instance );
 
-                    // var selected = 
+                    var name = self.instances.getInstanceName( instance );
+
+                    // var selected =
                     //     (instanceId == self.instanceId) ? 'selected' : false;
                     $menu.append(
                         $('<option value="' + instanceId + '"/>').
@@ -170,19 +141,22 @@ Dashboard.Widget.EC2Instance = DefineClass(
 
         $div.append( $("<div/>").text("Instance: ").append( $menu ));
         $div.append( this.$settingsToggle );
- 
+
         return $div;
     },
 
+    //----------------------------------------
+    // display "please select.." or actual data
+    //----------------------------------------
     renderInstanceView: function() {
         var inst = this.instance;
 
         var $div = $('<div class="inner"/>');
 
         if (!inst) {
-            $div.append( $("<div/>").text("selcte an instance") );
+            $div.append( $('<div class="title"/>').text("select an instance") );
         } else {
-            this._renderInstanceView( $div, inst );
+            this._displayInstanceData( $div, inst );
         }
 
         $div.append( this.$settingsToggle );
@@ -190,17 +164,13 @@ Dashboard.Widget.EC2Instance = DefineClass(
         return $div;
     },
 
-    getInstanceName: function( inst ) {
-        if (inst.tags && inst.tags[0] && inst.tags[0].key == "Name") {
-            return inst.tags[0].value || inst.instanceId;
-        } else {
-            return inst.instanceId;
-        }
-    },
-    _renderInstanceView: function( $div, inst ) {
-        
+    //----------------------------------------
+    // display actual data
+    //----------------------------------------
+    _displayInstanceData: function( $div, inst ) {
+
         var state = inst.state.name;
-        var name = this.getInstanceName( inst );
+        var name = this.instances.getInstanceName( inst );
 
         $div.append($('<div class="title"/>').text(
                         "EC2 Instance " + inst.instanceId ));
@@ -213,8 +183,8 @@ Dashboard.Widget.EC2Instance = DefineClass(
                         "IP: " + (inst.publicIpAddress || "N/A") ));
 
         // $div.append($("<div/>").text("Volumes: " + inst.volumes[0] ));
-        $div.append($('<div class="type"/>').text( 
-                        inst.instanceType + " (" + 
+        $div.append($('<div class="type"/>').text(
+                        inst.instanceType + " (" +
                             inst.placement.availabilityZone + ")"));
 
         var $status = $('<div class="status">');
@@ -243,5 +213,7 @@ Dashboard.Widget.EC2Instance = DefineClass(
 
         $div.append( $buttons );
     }
+
+
 }
 );
