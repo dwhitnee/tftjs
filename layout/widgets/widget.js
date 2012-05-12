@@ -1,5 +1,7 @@
 var Dashboard = Dashboard || {};
 
+// Portlet spec: http://portals.apache.org/pluto/portlet-2.0-apidocs/
+
 //----------------------------------------------------------------------
 // Basic widget that has a view div that can be drawn into
 //----------------------------------------------------------------------

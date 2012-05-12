@@ -2,7 +2,7 @@ var AWS = AWS || {};
 AWS.EC2 = AWS.EC2 || {};
 
 //----------------------------------------------------------------------
-// This screams for a Model object with "onDataLoaded" notifications
+//  Backbon-ifiy this?
 //----------------------------------------------------------------------
 
 
@@ -31,7 +31,7 @@ AWS.Model = DefineClass(
     primaryKey: "",  // pk of the json objects, ex: "instanceId"
 
 
-    server: "https://dwhitney.desktop.amazon.com:6253/x/sdk",
+    server: AWS.server,
 
     listeners: [],
     errorMessage: undefined,
@@ -66,7 +66,11 @@ AWS.Model = DefineClass(
         if (!key) {
             return this[this.listName];
         } else {
-            return this[this.listName][key];
+            if (this[this.listName]) {
+                return this[this.listName][key];
+            } else {
+                return undefined;
+            }
         }
     },
 
