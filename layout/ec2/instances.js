@@ -30,7 +30,6 @@ AWS.Model = DefineClass(
     listName: "",    // the name of the json array returned, ex: "instances"
     primaryKey: "",  // pk of the json objects, ex: "instanceId"
 
-
     server: AWS.server,
 
     listeners: [],
