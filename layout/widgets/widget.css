@@ -9,6 +9,16 @@
     text-align: center;
     line-height: 4em;
     color: red;
+    font-weight: bold;
+}
+
+.error .details {
+    line-height: 1em;
+    font-size: small;
+    font-weight: normal;
+    color: gray;
+    text-align: left;
+    padding-left: .5em;
 }
 
 .Widget-Text {

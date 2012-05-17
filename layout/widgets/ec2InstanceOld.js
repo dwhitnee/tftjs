@@ -3,16 +3,13 @@ var Dashboard = Dashboard || {};
 //----------------------------------------------------------------------
 // Display basic EC2 instace info.
 //
-// requires Collection of instances to be passed in:
-//   { instances: new AWS.EC2.Instances(),
-//     instanceId: "i-ebe9e488",   // optional default
-// }
+// This screams for a Model object with "onDataLoaded" notifications
 //----------------------------------------------------------------------
 Dashboard.Widget.EC2Instance = DefineClass(
     Dashboard.Widget,
 {
     type: "Widget-EC2Instance",
-    text: "I'm a little nut so brown",
+    text: "Click me to change color",
     settingsMode: false,
 
     //----------------------------------------
@@ -27,7 +24,7 @@ Dashboard.Widget.EC2Instance = DefineClass(
     },
 
     setInstance: function( instanceId ) {
-        this.instance = this.instances.get( instanceId );
+        this.instance = this.instances.getData( instanceId );
         this.instanceId = instanceId;
     },
 
@@ -45,7 +42,7 @@ Dashboard.Widget.EC2Instance = DefineClass(
                             e.data.toggleSettingsMode();
                         });
 
-        var icon = "../images/small_info_icon.png";
+        var icon = "http://www.pnsn.org/images/small_info_icon.png?1336068836";
 
         // this.$settingsToggle= $('<span class="settingsToggle">').text("[i]");
         this.$settingsToggle= $('<img class="settingsToggle">').
@@ -53,29 +50,30 @@ Dashboard.Widget.EC2Instance = DefineClass(
     },
 
     loadInstances: function() {
-        if (!this.instances) {
-            throw new Error("No instances data source supplied");
+        // should be wired up in Controller, not here.
+        this.instances = new AWS.EC2.Instances();
+
+        this.instances.addListener(
+            {
+                context: this,
+                success: this.handleDataLoaded
+            } );
+    },
+
+    checkForErrors: function( response ) {
+        if (response.error) {
+            this.handleError( response.error );
         }
-
-        // reset is the backbone event fired when a collection is loaded
-        this.instances.on("reset", this.handleDataLoaded, this /* context */ );
-        this.instances.on("error", this.handleError, this /* context */ );
-
-        this.instances.fetch();
     },
 
     //----------------------------------------
     // unfortunately with jsonp, the error message needs to be jsonp as well
     // so we can't display raw error results
     //----------------------------------------
-    handleError: function( model, resp, xhrOptions ) {
+    handleError: function( req, msg, error ) {
         this.loading = false;
         this.view.empty();
-        this.view.append( $('<div class="error"/>').
-                          text("D'oh!").
-                        append(
-                            $('<div class="details"/>').
-                                text("Failed to load " + xhrOptions.url )));
+        this.view.append( $('<div class="error"/>').text("d'oh!: " + msg) );
     },
 
     //----------------------------------------
@@ -122,16 +120,18 @@ Dashboard.Widget.EC2Instance = DefineClass(
         var $menu = $("<select>");
 
         var self = this;
-        // $.each( this.instances.getData() || {},
-        this.instances.each(
-                function( inst, i ) {
+        $.each( this.instances.getData() || {},
+                function( instanceId, instance ) {
 
-                    var instanceId = inst.get("instanceId");
+                    var name = self.instances.getInstanceName( instance );
+
+                    // var selected =
+                    //     (instanceId == self.instanceId) ? 'selected' : false;
                     $menu.append(
                         $('<option value="' + instanceId + '"/>').
-                            attr("selected", instanceId == this.instanceId ).
-                            text( inst.getName() ) );
-                }, this );
+                            attr("selected", instanceId == self.instanceId ).
+                            text( name ) );
+                });
 
         var useNewInstance = function( e ) {
             self.setInstance( e.target.value );
@@ -169,29 +169,30 @@ Dashboard.Widget.EC2Instance = DefineClass(
     //----------------------------------------
     _displayInstanceData: function( $div, inst ) {
 
-        var state = (inst && inst.get("state")) ? inst.get("state").name : "";
+        var state = inst.state.name;
+        var name = this.instances.getInstanceName( inst );
 
         $div.append($('<div class="title"/>').text(
                         "EC2 Instance " + inst.instanceId ));
 
-        $div.append( $('<span/>').css("font-weight","bold").text( inst.getName() ),
+        $div.append( $('<span/>').css("font-weight","bold").text( name ),
                      $('<span/>').text(" is "),
                      $('<span class="' + state + '"/>').text( state ));
 
         $div.append($('<div/>').text(
-                        "IP: " + (inst.get("publicIpAddress") || "N/A") ));
+                        "IP: " + (inst.publicIpAddress || "N/A") ));
 
         // $div.append($("<div/>").text("Volumes: " + inst.volumes[0] ));
         $div.append($('<div class="type"/>').text(
-                        inst.get("instanceType") + " (" +
-                            inst.get("placement").availabilityZone + ")"));
+                        inst.instanceType + " (" +
+                            inst.placement.availabilityZone + ")"));
 
         var $status = $('<div class="status">');
         var $box = $("<''>");
         $status.append( $box );
 
         var $devices = $('<div class="devices"/>');
-        $.each( inst.get("blockDeviceMappings") || [],
+        $.each( inst.blockDeviceMappings || [],
                 function( i, device ) {
                     var $li = $('<li/>');
                     var dev = device.deviceName;

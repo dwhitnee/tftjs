@@ -54,10 +54,12 @@ Dashboard.Widget.Factory = DefineClass(
         // our local list at least.
         try {
             return eval("new " + widgetClass + "( data )");
-        } 
+        }
         catch (ex) {
-            return new Dashboard.Widget( 
-                { text: "Failed to create widget " + className } );
+            return new Dashboard.Widget(
+                { text: "Failed to create widget " + className +
+                        " (" + ex.message + ")" });
+
         }
     },
 
@@ -78,8 +80,9 @@ Dashboard.Widget.Factory = DefineClass(
             },
             "3": {
                 type: "ec2Instance",
-                data: { 
-                    instanceId: "i-ebe9e488"
+                data: {
+                    instanceId: "i-ebe9e488",
+                    instances: new AWS.EC2.Instances()
                 }
             },
             "4": {

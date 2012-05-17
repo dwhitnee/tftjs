@@ -52,6 +52,9 @@ AWS.Model = Backbone.Model.extend(
     // unfortunately with jsonp, the error message needs to be jsonp as well
     // so we can't display raw error results
     handleError: function( req, msg, error ) {
+
+        // { "error": ["Please reauth..."] }
+        // will cause a parseerror
         this.loading = false;
         this.errorMsg = msg;
         this.notifyError();
@@ -60,7 +63,7 @@ AWS.Model = Backbone.Model.extend(
     /**
      *  Make an async call if this.url.method exists
      *  This is not Backbony in the least, but treats a Model as a first class
-     *  object, not a row in a DB table. 
+     *  object, not a row in a DB table.
      *
      *  @param method Ex: "terminate"
      *           assumes this.url.terminate="/ec2/terminateInstance"
@@ -90,20 +93,20 @@ AWS.Model = Backbone.Model.extend(
 // var instances = new AWS.EC2.Instances();
 // instances.fetch();
 // instances.on("change", doSomething )
- 
+
 // Fires "change" event on fetch()/sync()
 // fetch/sync has a built-in success function.  Errors are not handled except
 // by firing an "error" event
 
 // AWS.EC2.Instance = AWS.EC2.Model.extend(
 AWS.EC2.Instance = AWS.Model.extend(
-{  
-    initialize: function(){  
+{
+    initialize: function(){
         // TODO: how call parent initialize()?
         //Backbone.Model.prototype.initialize.call(this, attributes, options);
-    },  
+    },
+    idAttribute: "instanceId",    // primary key
     listName:   "instances",  // goes under collection?  FIXME
-    primaryKey: "instanceId",   // change to?  FIXME
     defaults: {},   // any needed?  FIXME
     urls: {
         list:   "/ec2/describeInstances?",
@@ -119,14 +122,28 @@ AWS.EC2.Instance = AWS.Model.extend(
      */
     parse: function( response, xhr ) {
         // pull reservations.instances into map
-        if (response.reservations) { 
+        if (response.reservations) {
             debugger;
             return response;
         } else {
             return response;   // reservation already parsed out by collection
         }
+    },
+
+    // pull tag name from all tags
+    getName: function() {
+        var tags = this.get("tags") || [];
+
+        for (var i = 0; i < tags.length; i++) {
+            if (tags[i].key == "Name" && tags[0].value) {
+                return tags[0].value;
+            }
+        }
+
+        return this.get("instanceId");
     }
-});  
+
+});
 
 //----------------------------------------------------------------------
 // A Collection of AWS objects, we need to parse the AWS response data into
@@ -134,10 +151,10 @@ AWS.EC2.Instance = AWS.Model.extend(
 //----------------------------------------------------------------------
 AWS.Model.Collection = Backbone.Collection.extend(
 {
-    // This is called on set(). 
+    // This is called on set().
     // Massage any ajax data into a backbone friendly layout.
     // turn response into simple array of parsable objects
-    // ex: { instances: [ ... ] } 
+    // ex: { instances: [ ... ] }
     parse: function( response, xhr ) {
         response = response || {};
         // do I need to call parse on each element of the response array too?
@@ -147,24 +164,39 @@ AWS.Model.Collection = Backbone.Collection.extend(
     },
 
     // override with jsonp getter
-    // if this is called from fetch, then built-in success/done() should 
+    // if this is called from fetch, then built-in success/done() should
     // call model.set() on the result
     sync: function(method, model, options) {
         // we only support method="read"
 
-        options = _.extend(           
-            {
-                // FIXME - this is ugly, accessor?
-                url: AWS.urlRoot + this.model.prototype.urls.list,
-                dataType: 'jsonp', // "&callback=?" is added if dataType='jsonp'
-                data: options,  // what about instanceId=?
-                context: this
-            }, options );
+        options = options || {};
+        options.context = this;
+        options.dataType = 'jsonp';
+        options.url = AWS.urlRoot + this.model.prototype.urls.list;
+
+        // options = $.extend( options,
+        //     {
+        //         // FIXME - this is ugly, accessor?
+        //         url: AWS.urlRoot + this.model.prototype.urls.list,
+        //         dataType: 'jsonp', // "&callback=?" is added if dataType='jsonp'
+        //         context: this
+
+        //         // data: options,  // what about instanceId=?
+
+        //         // unnecessary, "reset" called by default
+        //         // success: this.handleLoadResponse,
+
+        //         // potentially unnecessary, "error" event fired by default
+        //         // error: this.handleError
+
+        //     } );
+
+        Backbone.sync("read", model, options );
 
         // backbone.sync( method, model, options );
-        $.ajax( options ).done( this.handleLoadResponse )
-            .fail( this.handleError );
-            // .always( function() { alert("complete"); });
+        // $.ajax( options ).done( this.handleLoadResponse )
+        //     .fail( this.handleError );
+        //     .always( function() { alert("complete"); });
     }
 
 }
@@ -175,7 +207,7 @@ AWS.Model.Collection = Backbone.Collection.extend(
  */
 AWS.EC2.Instances = AWS.Model.Collection.extend(
 {
-    model : AWS.EC2.Instance,  
+    model : AWS.EC2.Instance,
 
     // pull reservations.instances into array
     parse: function( response, xhr ) {
@@ -193,13 +225,13 @@ AWS.EC2.Instances = AWS.Model.Collection.extend(
         return instances;
     },
 
-    old : function() {  
+    old : function() {
         // return this.filter(
-        //     function( game ) {  
-        //         return game.get('releaseDate') < 2009;  
-        //     });  
-    }  
-});  
+        //     function( game ) {
+        //         return game.get('releaseDate') < 2009;
+        //     });
+    }
+});
 
 /*
 //----------------------------------------------------------------------
