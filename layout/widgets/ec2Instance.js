@@ -95,11 +95,17 @@ Dashboard.Widget.EC2Instance = DefineClass(
 
     //----------------------------------------
     // entry point to rendering the widget
+    // display "please select.." or actual data
     //----------------------------------------
     render: function() {
         var $div;
 
         if (this.loading) { return; }
+
+        // make sure we have something worthwhile to render
+        if (!this.settingsMode && !this.instance) {
+            this.settingsMode = true;
+        }
 
         if (this.settingsMode) {
             $div = this.renderSettingsView();
@@ -146,19 +152,13 @@ Dashboard.Widget.EC2Instance = DefineClass(
     },
 
     //----------------------------------------
-    // display "please select.." or actual data
     //----------------------------------------
     renderInstanceView: function() {
         var inst = this.instance;
 
         var $div = $('<div class="inner"/>');
 
-        if (!inst) {
-            $div.append( $('<div class="title"/>').text("select an instance") );
-        } else {
-            this._displayInstanceData( $div, inst );
-        }
-
+        $div.append( this._displayInstanceData( inst ) );
         $div.append( this.$settingsToggle );
 
         return $div;
@@ -167,12 +167,14 @@ Dashboard.Widget.EC2Instance = DefineClass(
     //----------------------------------------
     // display actual data
     //----------------------------------------
-    _displayInstanceData: function( $div, inst ) {
+    _displayInstanceData: function( inst ) {
+
+        var $div = $('<div/>');
 
         var state = (inst && inst.get("state")) ? inst.get("state").name : "";
 
         $div.append($('<div class="title"/>').text(
-                        "EC2 Instance " + inst.instanceId ));
+                        "EC2 Instance " + inst.get("instanceId") ));
 
         $div.append( $('<span/>').css("font-weight","bold").text( inst.getName() ),
                      $('<span/>').text(" is "),
@@ -211,6 +213,8 @@ Dashboard.Widget.EC2Instance = DefineClass(
         $buttons.append( $start, $stop, $reboot );
 
         $div.append( $buttons );
+
+        return $div;
     }
 
 
