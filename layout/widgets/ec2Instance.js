@@ -148,7 +148,32 @@ Dashboard.Widget.EC2Instance = DefineClass(
         $div.append( $("<div/>").text("Instance: ").append( $menu ));
         $div.append( this.$settingsToggle );
 
+        // $div.append( this.getStoppedList() );
+        // $div.append( this.getInstancesByType("t1.micro") );
+
         return $div;
+    },
+
+    // experiment in filters
+    getStoppedList: function() {
+        var matches = $.map( 
+            this.instances.whereStateIs("stopped"),
+            function( instance ) { 
+                return instance.get("instanceId");
+            });
+        
+        return $('<div/>').text("Stopped: " + matches.join(", ") );
+    },
+
+    // experiment in filters
+    getInstancesByType: function( type ) {
+        var matches = $.map( 
+            this.instances.where( { instanceType: type } ),
+            function( instance ) { 
+                return instance.get("instanceId");
+            });
+        
+        return $('<div/>').text( type+"s: " + matches.join(", "));
     },
 
     //----------------------------------------
@@ -188,8 +213,9 @@ Dashboard.Widget.EC2Instance = DefineClass(
                         inst.get("instanceType") + " (" +
                             inst.get("placement").availabilityZone + ")"));
 
+        // green square?  TODO
         var $status = $('<div class="status">');
-        var $box = $("<''>");
+        var $box = $('<div class="'+ state +'"/>');
         $status.append( $box );
 
         var $devices = $('<div class="devices"/>');

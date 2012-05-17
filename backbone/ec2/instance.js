@@ -1,9 +1,7 @@
+// require aws.js
+
 var AWS = AWS || {};
 AWS.EC2 = AWS.EC2 || {};
-
-//----------------------------------------------------------------------
-//  Backbone version of AWS models
-//----------------------------------------------------------------------
 
 //----------------------------------------------------------------------
 //  AWS services are not particularly RESTful, ie, they don't have a
@@ -13,87 +11,6 @@ AWS.EC2 = AWS.EC2 || {};
 //  (ex: instance.stop() )
 //----------------------------------------------------------------------
 
-// CORS access, response needs this header:
-//  Access-Control-Allow-Origin: http://mywebappserver.com
-
-/**
- * Each model must supply listName and primaryKey for the default mechanisms
- * to work
- */
-AWS.Model = Backbone.Model.extend(
-{
-    //----------------------------------------------------------------------
-    // Each model must supply these for the default mecahnisms to work
-    //----------------------------------------------------------------------
-    listName: "",    // the name of the json array returned, ex: "instances"
-    primaryKey: "",  // pk of the json objects, ex: "instanceId"
-
-    server: AWS.server,
-    errorMessage: undefined,
-
-    initialize: function( data ) {
-        //set up cross domain (CORS) flags
-        $.ajaxSetup(
-            {
-                dataType: 'json',
-                crossDomain: true,
-                xhrFields: {
-                    withCredentials: true
-                },
-                context: this,
-                success: this.handleLoadResponse,
-                error: this.handleError,
-
-                timeout: 10000   // don't run success CB after 10s passed
-
-            });
-    },
-
-    // unfortunately with jsonp, the error message needs to be jsonp as well
-    // so we can't display raw error results
-    handleError: function( req, msg, error ) {
-
-        // { "error": ["Please reauth..."] }
-        // will cause a parseerror
-        this.loading = false;
-        this.errorMsg = msg;
-        this.notifyError();
-    },
-
-    /**
-     *  Make an async call if this.url.method exists
-     *  This is not Backbony in the least, but treats a Model as a first class
-     *  object, not a row in a DB table.
-     *
-     *  @param method Ex: "terminate"
-     *           assumes this.url.terminate="/ec2/terminateInstance"
-     *  @param args requestParams, ex: { instanceId: "i-1234" }
-     */
-    executeAsync: function( method, args ) {
-        if (!this.url[method]) {
-            throw new Error("Unknown method " + method);
-        }
-        var url = this.server + this.url[method];
-
-        $.ajax({
-                   url: url, // adds"&callback=?" if jsonp
-                   dataType: 'jsonp',
-                   data: args,
-                   context: this,
-                   success: this.handleExecResponse,
-                   error: this.handleError
-               }
-              );
-    }
-
-});
-
-
-
-// var instances = new AWS.EC2.Instances();
-// instances.fetch();
-// instances.on("change", doSomething )
-
 // Fires "change" event on fetch()/sync()
 // fetch/sync has a built-in success function.  Errors are not handled except
 // by firing an "error" event
@@ -101,21 +18,38 @@ AWS.Model = Backbone.Model.extend(
 // AWS.EC2.Instance = AWS.EC2.Model.extend(
 AWS.EC2.Instance = AWS.Model.extend(
 {
-    initialize: function(){
-        // TODO: how call parent initialize()?
-        //Backbone.Model.prototype.initialize.call(this, attributes, options);
-    },
     idAttribute: "instanceId",    // primary key
     listName:   "instances",  // goes under collection?  FIXME
     defaults: {},   // any needed?  FIXME
+
     urls: {
-        list:   "/ec2/describeInstances?",
+        list:   "/ec2/describeInstances?",   // how to describe one?
         stop:   "/ec2/stopInstance?",
         start:  "/ec2/startInstance?",
         reboot: "/ec2/rebootInstance?"
     },
 
+    // get data for a single instance 
+    sync: function(method, model, options) {
+        // same as Instances.sync
+        options = options || {};
+        options.url = AWS.urlRoot + this.urls.list;
+        options.context = this;
+        options.dataType = 'jsonp';
+
+        // TODO: how to convince jQuery.param( s.data ); to jsonify correctly
+        // want:   args={"instanceIds":["i-1d3c357e"]}
+        // getting: args[instanceIds][] = "i-1d3c357e"
+        // args[instanceIds][] = i-1d3c357e
+        options.data = options.data || {};
+        options.data.args = { instanceIds: [this.get("instanceId")] };
+        // {"instanceIds":["i-1d3c357e"]}
+
+        Backbone.sync("read", model, options );
+    },
     /**
+     * I think only collection.parse() is called
+     * 
      * This is called whenever this object is created.  Massage any
      * ajax data into a backbone friendly layout.
      * Does set expect an array of objects?  Probably
@@ -123,11 +57,32 @@ AWS.EC2.Instance = AWS.Model.extend(
     parse: function( response, xhr ) {
         // pull reservations.instances into map
         if (response.reservations) {
+            var instances = [];
+            $.each( response.reservations || {},
+                    function( i, reservation ) {
+                        $.each( reservation.instances,
+                                function( j, instance ) {
+                                    instances.push(instance );
+                                });
+                    });
             debugger;
-            return response;
+            return instances;
         } else {
             return response;   // reservation already parsed out by collection
         }
+    },
+
+    start: function( instanceId ) {
+        this.executeAsync("start");
+    },
+    stop: function( instanceId ) {
+        this.executeAsync("stop");
+    },
+    reboot: function( instanceId ) {
+        this.executeAsync("reboot");
+    },
+    terminate: function( instanceId ) {
+        this.executeAsync("terminate");
     },
 
     // pull tag name from all tags
@@ -140,67 +95,14 @@ AWS.EC2.Instance = AWS.Model.extend(
             }
         }
 
+        this.fetch().done( function(x,y,z) {
+                               var i = 3;
+                               debugger;
+                           });
         return this.get("instanceId");
     }
-
 });
 
-//----------------------------------------------------------------------
-// A Collection of AWS objects, we need to parse the AWS response data into
-// a simple array of objects (client-side Nucleo..)
-//----------------------------------------------------------------------
-AWS.Model.Collection = Backbone.Collection.extend(
-{
-    // This is called on set().
-    // Massage any ajax data into a backbone friendly layout.
-    // turn response into simple array of parsable objects
-    // ex: { instances: [ ... ] }
-    parse: function( response, xhr ) {
-        response = response || {};
-        // do I need to call parse on each element of the response array too?
-        // TODO
-        // ensure listName?  TODO
-        return response[this.model.prototype.listName];  // FIXME ugly static
-    },
-
-    // override with jsonp getter
-    // if this is called from fetch, then built-in success/done() should
-    // call model.set() on the result
-    sync: function(method, model, options) {
-        // we only support method="read"
-
-        options = options || {};
-        options.context = this;
-        options.dataType = 'jsonp';
-        options.url = AWS.urlRoot + this.model.prototype.urls.list;
-
-        // options = $.extend( options,
-        //     {
-        //         // FIXME - this is ugly, accessor?
-        //         url: AWS.urlRoot + this.model.prototype.urls.list,
-        //         dataType: 'jsonp', // "&callback=?" is added if dataType='jsonp'
-        //         context: this
-
-        //         // data: options,  // what about instanceId=?
-
-        //         // unnecessary, "reset" called by default
-        //         // success: this.handleLoadResponse,
-
-        //         // potentially unnecessary, "error" event fired by default
-        //         // error: this.handleError
-
-        //     } );
-
-        Backbone.sync("read", model, options );
-
-        // backbone.sync( method, model, options );
-        // $.ajax( options ).done( this.handleLoadResponse )
-        //     .fail( this.handleError );
-        //     .always( function() { alert("complete"); });
-    }
-
-}
-);
 
 /**
  * A collection of EC2 instances, the fetch() needs to populate models
@@ -225,89 +127,17 @@ AWS.EC2.Instances = AWS.Model.Collection.extend(
         return instances;
     },
 
-    old : function() {
-        // return this.filter(
-        //     function( game ) {
-        //         return game.get('releaseDate') < 2009;
-        //     });
+    // filters:
+    // this.instances.where( { instanceType: "t1.micro" } );
+
+    // complex filter (data is complex, not the filter)
+    // stopped, terminated, running, pending
+    whereStateIs: function( inState ) {
+        return this.filter(
+            function( instance ) {
+                var state = (instance && instance.get("state")) ? 
+                    instance.get("state").name : "";
+                return state == inState;
+            });
     }
 });
-
-/*
-//----------------------------------------------------------------------
-AWS.EC2.Instances = DefineClass(
-    AWS.Model,
-{
-    listName:   "instances",
-    primaryKey: "instanceId",
-
-    url: {
-        list:   "/ec2/describeInstances?",
-        stop:   "/ec2/stopInstance?",
-        start:  "/ec2/startInstance?",
-        reboot: "/ec2/rebootInstance?"
-    },
-
-    init: function( data ) {
-        AWS.Model.init.call( this, data );
-
-        this.loaded = false;
-
-        this.loadAsync();
-
-        // listen for dataLoaded and populate this.instance
-    },
-
-    // this could be generic unless you want to munge the response some way
-    // for example, losing instance reservations.
-    handleLoadResponse: function( response ) {
-
-        var instances = {};
-
-        // this doesn't work with jsonp, would need foo( { error: "doh!" } );
-        this.checkForErrors( response );
-
-        // pull reservations.instances into map
-        var self = this;
-        $.each( response.reservations || {},
-                function( i, reservation ) {
-                    $.each( reservation.instances,
-                            function( j, instance ) {
-                                instances[ instance.instanceId ] =
-                                    instance;
-                            });
-                });
-        this[this.listName] = instances;
-
-        this.notifyLoaded();
-    },
-
-    checkForErrors: function( response ) {
-        if (response.error) {
-            this.handleError( response.error );
-        }
-    },
-
-    getInstanceName: function( inst ) {
-        if (inst.tags && inst.tags[0] && inst.tags[0].key == "Name") {
-            return inst.tags[0].value || inst.instanceId;
-        } else {
-            return inst.instanceId;
-        }
-    },
-
-    start: function( instanceId ) {
-        this.executeAsync("start");
-    },
-    stop: function( instanceId ) {
-        this.executeAsync("stop");
-    },
-    reboot: function( instanceId ) {
-        this.executeAsync("reboot");
-    },
-    terminate: function( instanceId ) {
-        this.executeAsync("terminate");
-    }
-}
-);
-*/
