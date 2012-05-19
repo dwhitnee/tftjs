@@ -7,8 +7,4 @@
 .#*
 local.js
 
-backbone/Model.js
-
-backbone/Collection.js
-
 backbone/backbone.js
