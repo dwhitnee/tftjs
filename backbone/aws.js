@@ -4,12 +4,12 @@ var AWS = AWS || {};
 //  Backbone version of AWS models
 //----------------------------------------------------------------------
 
-// CORS access, response needs this header:
+// For CORS access, server response needs this header:
 //  Access-Control-Allow-Origin: http://mywebappserver.com
 
 /**
- * Each model must supply listName and primaryKey for the default mechanisms
- * to work
+ * Each model must supply listName and idAttribute (primaryKey) for the default
+ * SDKinator mechanisms to work.
  */
 AWS.Model = Backbone.Model.extend(
 {
@@ -20,17 +20,15 @@ AWS.Model = Backbone.Model.extend(
     idAttribute: "",  // primary key of the json objects, ex: "instanceId"
 
     server: AWS.server,
-    errorMessage: undefined,
+    errorMessage: undefined,  // ?
 
-    // this is not called unless children call it
+    // this is not called unless children call it with
     // AWS.Model.prototype.initialize.call(this, attributes, options);
-
     initialize: function( attributes, options ) {
 
         Backbone.Model.prototype.initialize.call(this, attributes, options);
 
         // assert idAttribute and listName
-
         if (!this.idAttribute) {
             throw new Error("No idAttribute specified in Model");
         }
@@ -38,28 +36,52 @@ AWS.Model = Backbone.Model.extend(
             throw new Error("No listName specified in Model");
         }
 
-        //set up cross domain (CORS) flags
         $.ajaxSetup(
             {
                 dataType: 'json',
-                crossDomain: true,
-                xhrFields: {
-                    withCredentials: true
-                },
                 context: this,
                 success: this.handleLoadResponse,
                 error: this.handleError,
+
+                // set up cross domain (CORS) flags
+                // crossDomain: true,
+                // xhrFields: { withCredentials: true },  // pass cookies
 
                 timeout: 10000   // don't run success CB after 10s passed
             });
     },
 
-    // unfortunately with jsonp, the error message needs to be jsonp as well
-    // so we can't display raw error results
-    handleError: function( model, resp, xhrOptions ) {
+    // error check before we look at data
+    // if something is bad here an "error" event will be triggered later
+    // should we short circuit instead?  TODO
+    beforeParse: function( response, xhr ) {
+        this.errorMessage = AWS.util.parseErrors( response, xhr );
+    },
 
-        // { "error": ["Please reauth..."] }
-        // will cause a parseerror, but backbone swallows it in wrapError
+    /**
+     * Called for Model.sync/fetch(), expects only a single object, so
+     * return only the first element of the array AWS probably handed us. 
+     */
+    parse: function( response, xhr ) {
+        this.beforeParse( response, xhr );
+
+        // if this is an unmassaged response from AWS
+        if (response) {
+            var modelList =  response[this.model.prototype.listName];
+            if (modelList.length === 1) {
+                return modelList[0];
+            }
+        }
+        // hope this is a pure object already (ex: collection.add)
+        return response;
+    },
+
+    // ajax error handler, not error trigger
+    // TODO: parseError message here also. 
+    handleError: function( model, resp, xhrOptions ) {
+        // broken?
+        this.errorMessage = this.errorMessage ||
+            "Failed to load " + xhrOptions.url;
     },
 
     /**
@@ -104,16 +126,24 @@ AWS.Model = Backbone.Model.extend(
 //----------------------------------------------------------------------
 AWS.Model.Collection = Backbone.Collection.extend(
 {
-    // This is called on set().
-    // Massage any ajax data into a backbone friendly layout.
-    // turn response into simple array of parsable objects
-    // ex: { instances: [ ... ] }
+    beforeParse: function( response, xhr ) {
+        // check for errors first
+        this.errorMessage = AWS.parseErrors( response, xhr );
+    },
+
+    // This is called on set() (from fetch/sync, etc).
+    // Massage any ajax data into a backbone friendly array of json.
+    // ex: { instances: [ ... ] } ==>  [ inst1, inst2, inst3 ]
+    // if not an array, don't bother
     parse: function( response, xhr ) {
+
+        this.beforeParse( response, xhr );
+
         response = response || {};
+
         // do I need to call parse on each element of the response array too?
         // TODO
-        // ensure listName?  TODO
-        return response[this.model.prototype.listName];  // FIXME ugly static
+        return response[this.model.prototype.listName];
     },
 
     // override with jsonp getter
@@ -124,25 +154,15 @@ AWS.Model.Collection = Backbone.Collection.extend(
 
         options = options || {};
         options.context = this;
-        options.dataType = 'jsonp';
+        options.dataType = 'jsonp';   // "&callback=?" is added to url for jsonp
+
         options.url = AWS.urlRoot + this.model.prototype.urls.list;
 
-        // options = $.extend( options,
-        //     {
-        //         // FIXME - this is ugly, accessor?
-        //         url: AWS.urlRoot + this.model.prototype.urls.list,
-        //         dataType: 'jsonp', // "&callback=?" is added if dataType='jsonp'
-        //         context: this
+        // unnecessary, "reset" or "change" called by default
+        // success: this.handleLoadResponse,
 
-        //         // data: options,  // what about instanceId=?
-
-        //         // unnecessary, "reset" called by default
-        //         // success: this.handleLoadResponse,
-
-        //         // potentially unnecessary, "error" event fired by default
-        //         // error: this.handleError
-
-        //     } );
+        // potentially unnecessary, "error" event fired by default
+        // error: this.handleError
 
         Backbone.sync("read", model, options );
 

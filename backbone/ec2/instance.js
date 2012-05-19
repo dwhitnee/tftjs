@@ -37,39 +37,49 @@ AWS.EC2.Instance = AWS.Model.extend(
         options.context = this;
         options.dataType = 'jsonp';
 
+        var args = { instanceIds: [this.get("instanceId")] };
+
         // TODO: how to convince jQuery.param( s.data ); to jsonify correctly
         // want:   args={"instanceIds":["i-1d3c357e"]}
         // getting: args[instanceIds][] = "i-1d3c357e"
         // args[instanceIds][] = i-1d3c357e
-        options.data = options.data || {};
-        options.data.args = { instanceIds: [this.get("instanceId")] };
-        // {"instanceIds":["i-1d3c357e"]}
 
-        Backbone.sync("read", model, options );
+        options.data = $.extend( options.data, 
+                                 { args: JSON.stringify( args ) });
+
+        return Backbone.sync("read", model, options );
     },
     /**
-     * I think only collection.parse() is called
+     * Called for Model.sync(), expects only a single object
      * 
      * This is called whenever this object is created.  Massage any
      * ajax data into a backbone friendly layout.
-     * Does set expect an array of objects?  Probably
      */
     parse: function( response, xhr ) {
-        // pull reservations.instances into map
-        if (response.reservations) {
+        var instances = this.parseInstances( response, xhr );
+
+        return (instances.length === 1)? instances[0] : response;
+
+        // probably an error if not a single instance, but hope for the best.
+    },
+
+    // flatten reservations into instances
+    parseInstances: function( response, xhr ) {
+        this.beforeParse( response, xhr );
+
+        if (response && response.reservations) {
             var instances = [];
-            $.each( response.reservations || {},
+            $.each( response.reservations,
                     function( i, reservation ) {
                         $.each( reservation.instances,
                                 function( j, instance ) {
                                     instances.push(instance );
                                 });
                     });
-            debugger;
             return instances;
-        } else {
-            return response;   // reservation already parsed out by collection
         }
+        // hope for the best (server did parsing or just a set( attrs ) call)
+        return response;
     },
 
     start: function( instanceId ) {
@@ -95,38 +105,34 @@ AWS.EC2.Instance = AWS.Model.extend(
             }
         }
 
-        this.fetch().done( function(x,y,z) {
-                               var i = 3;
-                               debugger;
-                           });
+        this.set("instanceId", "i-1d3c357b");
+        this.on("error", function( model, resp, xhrOptions) {
+                    alert( this.errorMessage || resp.statusText );
+                }, this /* context */ );
+        this.fetch();
+
         return this.get("instanceId");
     }
 });
 
 
 /**
- * A collection of EC2 instances, the fetch() needs to populate models
+ * A collection of EC2 instances, a good place to put filters
  */
 AWS.EC2.Instances = AWS.Model.Collection.extend(
 {
     model : AWS.EC2.Instance,
 
-    // pull reservations.instances into array
+    // flatten reservations into instances
     parse: function( response, xhr ) {
-        var instances = [];
-
-        response = response || {};
-        var self = this;
-        $.each( response.reservations || {},
-                function( i, reservation ) {
-                    $.each( reservation.instances,
-                            function( j, instance ) {
-                                instances.push(instance );
-                            });
-                });
-        return instances;
+        return this.model.prototype.parseInstances( response, xhr );
     },
 
+
+
+    //----------------------------------------
+    // experimental
+    //----------------------------------------
     // filters:
     // this.instances.where( { instanceType: "t1.micro" } );
 
