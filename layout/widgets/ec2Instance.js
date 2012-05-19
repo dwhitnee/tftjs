@@ -57,8 +57,10 @@ Dashboard.Widget.EC2Instance = DefineClass(
             throw new Error("No instances data source supplied");
         }
 
-        // reset is the backbone event fired when a collection is loaded
+        // 'reset' is the backbone event fired when a collection is loaded
+        // 'change' is fired on a single model loaded.
         this.instances.on("reset", this.handleDataLoaded, this /* context */ );
+        this.instances.on("change", this.handleDataLoaded, this /* context */ );
         this.instances.on("error", this.handleError, this /* context */ );
 
         this.instances.fetch();
@@ -75,7 +77,8 @@ Dashboard.Widget.EC2Instance = DefineClass(
                           text("D'oh!").
                         append(
                             $('<div class="details"/>').
-                                text("Failed to load " + xhrOptions.url )));
+                                text( model.errorMessage )));
+//                              text("Failed to load " + xhrOptions.url )));
     },
 
     //----------------------------------------
