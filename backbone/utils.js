@@ -1,45 +1,10 @@
-<<<<<<< HEAD
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+var AWS = AWS || {};
 AWS.util = AWS.util || {};
 
+//----------------------------------------------------------------------
 // CORS access, response needs this header:
 //  Access-Control-Allow-Origin: http://mywebappserver.com
+//----------------------------------------------------------------------
 AWS.util.setupAjax = function() {
     //set up cross domain (CORS) flags
     $.ajaxSetup(
@@ -56,9 +21,7 @@ AWS.util.setupAjax = function() {
 
 // where should this go?
 AWS.util.setupAjax();
-=======
-var AWS = AWS || {};
-AWS.util = AWS.util || {};
+
 
 //----------------------------------------------------------------------
 // handle errors found in Backbone.parse() like
@@ -79,4 +42,3 @@ AWS.util.parseErrors = function( response, xhr ) {
     }
     return undefined;
 }
->>>>>>> stuff

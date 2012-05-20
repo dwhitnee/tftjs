@@ -31,23 +31,10 @@ AWS.EC2.Instance = AWS.Model.extend(
 
     // get data for a single instance 
     sync: function(method, model, options) {
-        // same as Instances.sync
-        options = options || {};
-        options.url = AWS.urlRoot + this.urls.list;
-        options.context = this;
-        options.dataType = 'jsonp';
-
         var args = { instanceIds: [this.get("instanceId")] };
 
-        // TODO: how to convince jQuery.param( s.data ); to jsonify correctly
-        // want:   args={"instanceIds":["i-1d3c357e"]}
-        // getting: args[instanceIds][] = "i-1d3c357e"
-        // args[instanceIds][] = i-1d3c357e
-
-        options.data = $.extend( options.data, 
-                                 { args: JSON.stringify( args ) });
-
-        return Backbone.sync("read", model, options );
+        return AWS.Model.prototype.sync.call( 
+            this, "read", model, this.addRequestArgs( options, args ));
     },
     /**
      * Called for Model.sync(), expects only a single object

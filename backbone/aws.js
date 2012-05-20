@@ -1,15 +1,24 @@
+// wrap in a protective layer of closurey goodness to protect $ and global
+// should this wrap at a more global level?  TODO
+// (function awsModelDefinition_(global,$) {
+// var AWS = global.AWS = global.AWS || {};
+
 var AWS = AWS || {};
 
 //----------------------------------------------------------------------
+//---------------------------------------------------------------------- 
 //  Backbone version of AWS models
 //----------------------------------------------------------------------
-
-// For CORS access, server response needs this header:
-//  Access-Control-Allow-Origin: http://mywebappserver.com
+//----------------------------------------------------------------------
 
 /**
  * Each model must supply listName and idAttribute (primaryKey) for the default
  * SDKinator mechanisms to work.
+
+ * Backbone steals the ajax success/error callbacks so we rely on the
+ * BB event model to handle everything.  By attaching in ctor we are the first
+ * error handlers.
+ * This way we don't need xhr.done() and xhr.error() either.
  */
 AWS.Model = Backbone.Model.extend(
 {
@@ -20,13 +29,13 @@ AWS.Model = Backbone.Model.extend(
     idAttribute: "",  // primary key of the json objects, ex: "instanceId"
 
     server: AWS.server,
-    errorMessage: undefined,  // ?
+    errorMessage: undefined,  // set when ajax fails
 
     // this is not called unless children call it with
     // AWS.Model.prototype.initialize.call(this, attributes, options);
     initialize: function( attributes, options ) {
 
-        Backbone.Model.prototype.initialize.call(this, attributes, options);
+        Backbone.Model.prototype.initialize.apply( this, arguments );
 
         // assert idAttribute and listName
         if (!this.idAttribute) {
@@ -36,19 +45,17 @@ AWS.Model = Backbone.Model.extend(
             throw new Error("No listName specified in Model");
         }
 
-        $.ajaxSetup(
-            {
-                dataType: 'json',
-                context: this,
-                success: this.handleLoadResponse,
-                error: this.handleError,
+        // put ajax-y handlers here because BB steals success and error handlers
+        // these will occur before xhr.done() and xhr.error()
+        // These will happen first, even before xhr.done() and xhr.error()
+        this.on("change", this.handleLoadResponse );
+        this.on("error", this.handleError );
+    },
 
-                // set up cross domain (CORS) flags
-                // crossDomain: true,
-                // xhrFields: { withCredentials: true },  // pass cookies
-
-                timeout: 10000   // don't run success CB after 10s passed
-            });
+    getXHROptions: function() {
+        return {
+            context: this
+        };
     },
 
     // error check before we look at data
@@ -65,7 +72,7 @@ AWS.Model = Backbone.Model.extend(
     parse: function( response, xhr ) {
         this.beforeParse( response, xhr );
 
-        // if this is an unmassaged response from AWS
+        // if this is an unmassaged response from AWS, dereference it
         if (response) {
             var modelList =  response[this.model.prototype.listName];
             if (modelList.length === 1) {
@@ -76,12 +83,39 @@ AWS.Model = Backbone.Model.extend(
         return response;
     },
 
-    // ajax error handler, not error trigger
-    // TODO: parseError message here also. 
+    // merge in properly jsonified args param to ajax request
+    // ex: args = { instanceIds: ["i-1234"] };
+    addRequestArgs: function( options, args ) {
+        options = options || {};
+        options.data = $.extend( options.data, 
+                                 { args: JSON.stringify( args ) });
+        return options;
+    },
+
+    // get data for a single instance, same as Colection.sync (plus args)
+    // presumes that children will call the appropriate addRequestArgs()
+    // ex: addRequestArgs( { instanceIds: [this.get("instanceId")] } );
+    sync: function(method, model, options) {
+
+        var xhrOptions = $.extend( this.getXHROptions(), options );
+        xhrOptions.url = AWS.urlRoot + this.urls.list;
+
+        return Backbone.sync("read", model, xhrOptions );
+    },
+
+
+    // But what about beforeParse?  Will it get called on a 400 so we can read
+    // error: []?
+    // TEST 400
+    // TODO: probably need to parseError message here also.
+
+    // error event handler, not ajax error handler, BB swallows that
     handleError: function( model, resp, xhrOptions ) {
-        // broken?
         this.errorMessage = this.errorMessage ||
-            "Failed to load " + xhrOptions.url;
+            "Failed to load " + xhrOptions.url + 
+            ", code: " + resp.status+  ", status: " + resp.statusText;
+
+        alert("dammit model: " + this.errorMessage );
     },
 
     /**
@@ -101,10 +135,8 @@ AWS.Model = Backbone.Model.extend(
         var url = this.server + this.url[method];
 
         $.ajax({
-                   url: url, // adds"&callback=?" if jsonp
-                   dataType: 'jsonp',
+                   url: url,
                    data: args,
-                   context: this,
                    success: this.handleExecResponse,
                    error: this.handleError
                }
@@ -126,9 +158,14 @@ AWS.Model = Backbone.Model.extend(
 //----------------------------------------------------------------------
 AWS.Model.Collection = Backbone.Collection.extend(
 {
-    beforeParse: function( response, xhr ) {
-        // check for errors first
-        this.errorMessage = AWS.parseErrors( response, xhr );
+    initialize: function( models, options ) {
+        Backbone.Collection.prototype.initialize.apply( this, arguments );
+
+        // put ajax-y handlers here because BB steals 
+        // xhr.success and xhr.error handlers.
+        // These will happen first, even before xhr.done() and xhr.error()
+        this.on("reset", this.handleLoadResponse );
+        this.on("error", this.handleError );
     },
 
     // This is called on set() (from fetch/sync, etc).
@@ -136,41 +173,49 @@ AWS.Model.Collection = Backbone.Collection.extend(
     // ex: { instances: [ ... ] } ==>  [ inst1, inst2, inst3 ]
     // if not an array, don't bother
     parse: function( response, xhr ) {
-
         this.beforeParse( response, xhr );
 
         response = response || {};
 
-        // do I need to call parse on each element of the response array too?
-        // TODO
-        return response[this.model.prototype.listName];
+        // AWS will give us this: { instances: [ ... ] }
+        // return just the array part
+        if (response[this.model.prototype.listName]) {
+            return response[this.model.prototype.listName];
+        }
+        
+        // hope this is a pure object already (ex: ctor)   
+        return response;
     },
 
-    // override with jsonp getter
-    // if this is called from fetch, then built-in success/done() should
-    // call model.set() on the result
-    sync: function(method, model, options) {
-        // we only support method="read"
 
-        options = options || {};
-        options.context = this;
-        options.dataType = 'jsonp';   // "&callback=?" is added to url for jsonp
+    getXHROptions: function() {
+        return this.model.prototype.getXHROptions.apply( this, arguments );
+    },
+    beforeParse: function( response, xhr ) {
+        return this.model.prototype.beforeParse.apply( this, arguments );
+    },
+    addRequestArgs: function( options, args ) {
+        return this.model.prototype.addRequestArgs.apply( this, arguments );
+    },
+    // calls model.set() on the result, "reset" event fired when this is done
+    sync: function(method, model, options)  {
 
-        options.url = AWS.urlRoot + this.model.prototype.urls.list;
+        var xhrOptions = $.extend( this.getXHROptions(), options );
 
-        // unnecessary, "reset" or "change" called by default
-        // success: this.handleLoadResponse,
+        // can't call Model as "this" since urls is not a member of collection
+        // FIXME
+        xhrOptions.url = AWS.urlRoot + this.model.prototype.urls.list;
 
-        // potentially unnecessary, "error" event fired by default
-        // error: this.handleError
-
-        Backbone.sync("read", model, options );
-
-        // backbone.sync( method, model, options );
-        // $.ajax( options ).done( this.handleLoadResponse )
-        //     .fail( this.handleError );
-        //     .always( function() { alert("complete"); });
+        return Backbone.sync("read", model, xhrOptions );
+    },
+    handleError: function( model, resp, xhrOptions ) { 
+        return this.model.prototype.handleError.apply( this, arguments );
     }
 
 }
 );
+
+
+
+// end of closure
+// })(this, jQuery||{} );
