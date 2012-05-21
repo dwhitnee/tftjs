@@ -5,18 +5,50 @@ AWS.util = AWS.util || {};
 // CORS access, response needs this header:
 //  Access-Control-Allow-Origin: http://mywebappserver.com
 //----------------------------------------------------------------------
+
+// Override the default implementation of `Backbone.ajax` to use jquery-jsonp
+// Backbone.ajax = function() {
+//     return $.jsonp.apply($, arguments);
+// };
+
 AWS.util.setupAjax = function() {
-    //set up cross domain (CORS) flags
-    $.ajaxSetup(
-        {
-            dataType: 'jsonp',
+    // set up cross domain (CORS) flags
+    
+    var options;
+
+    var cors = true;
+    var jsonp = !cors;
+    
+    if (jsonp) {
+
+        options = { dataType: 'jsonp' };
+
+    } else if (cors) {
+
+        options = {
+            dataType: 'json',
             crossDomain: true,
             xhrFields: {
                 withCredentials: true
-            },
+            }
+        };
 
-            timeout: 10000   // don't run success CB after 10s passed
-        });
+    } else {
+
+        options = { dataType: 'json' };
+
+    }
+
+    options = $.extend( options,
+                        {
+                      // don't run success CB after 10s passed
+                      timeout: 10000
+                  });
+
+    // this is nice, but BB trashes these so we need to set them on each sync()
+    $.ajaxSetup(  options );
+
+    return options;
 };
 
 // where should this go?

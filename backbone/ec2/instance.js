@@ -52,10 +52,20 @@ AWS.EC2.Instance = AWS.Model.extend(
 
     // flatten reservations into instances
     parseInstances: function( response, xhr ) {
+
         this.beforeParse( response, xhr );
+        
+        var instances = [];
+         
+        // if there is an error don't proceed.  should we fire "error"?
+        // probably not, so as not to trash what we learned in beforeParse
+        // really this should be a 400/500 and handleError would have fired....
+
+        if (this.errorMessage) {
+            return instances;
+        }
 
         if (response && response.reservations) {
-            var instances = [];
             $.each( response.reservations,
                     function( i, reservation ) {
                         $.each( reservation.instances,
@@ -92,11 +102,11 @@ AWS.EC2.Instance = AWS.Model.extend(
             }
         }
 
-        this.set("instanceId", "i-1d3c357b");
-        this.on("error", function( model, resp, xhrOptions) {
-                    alert( this.errorMessage || resp.statusText );
-                }, this /* context */ );
-        this.fetch();
+        // this.set("instanceId", "i-1d3c357b");
+        // this.on("error", function( model, resp, xhrOptions) {
+        //             alert( this.errorMessage || resp.statusText );
+        //         }, this /* context */ );
+        // this.fetch();
 
         return this.get("instanceId");
     }
@@ -114,7 +124,6 @@ AWS.EC2.Instances = AWS.Model.Collection.extend(
     parse: function( response, xhr ) {
         return this.model.prototype.parseInstances( response, xhr );
     },
-
 
 
     //----------------------------------------

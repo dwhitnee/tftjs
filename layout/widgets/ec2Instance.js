@@ -63,7 +63,11 @@ Dashboard.Widget.EC2Instance = DefineClass(
         this.instances.on("change", this.handleDataLoaded, this /* context */ );
         this.instances.on("error", this.handleError, this /* context */ );
 
-        this.instances.fetch();
+        var options = {};
+        // this.instances.addRequestArgs( 
+        //     options, { instanceIds: ["i-abcdabcd"] } );
+
+        this.instances.fetch( options );
     },
 
     //----------------------------------------

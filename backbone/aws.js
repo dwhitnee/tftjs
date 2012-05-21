@@ -87,8 +87,9 @@ AWS.Model = Backbone.Model.extend(
     // ex: args = { instanceIds: ["i-1234"] };
     addRequestArgs: function( options, args ) {
         options = options || {};
-        options.data = $.extend( options.data, 
-                                 { args: JSON.stringify( args ) });
+        options.data = options.data || {};
+        $.extend( options.data, 
+                  { args: JSON.stringify( args ) });
         return options;
     },
 
@@ -97,7 +98,11 @@ AWS.Model = Backbone.Model.extend(
     // ex: addRequestArgs( { instanceIds: [this.get("instanceId")] } );
     sync: function(method, model, options) {
 
-        var xhrOptions = $.extend( this.getXHROptions(), options );
+        var xhrOptions = AWS.util.setupAjax();
+
+        // merge global defaults, model defaults, and overrides
+        $.extend( xhrOptions, this.getXHROptions(), options );
+
         xhrOptions.url = AWS.urlRoot + this.urls.list;
 
         return Backbone.sync("read", model, xhrOptions );
@@ -109,6 +114,9 @@ AWS.Model = Backbone.Model.extend(
     // TEST 400
     // TODO: probably need to parseError message here also.
 
+    // NOTE: in jsonp, an auth failure results in a non-jsonp response
+    // so the status=0 and the resp="error" with no other details.
+     
     // error event handler, not ajax error handler, BB swallows that
     handleError: function( model, resp, xhrOptions ) {
         this.errorMessage = this.errorMessage ||
@@ -200,7 +208,10 @@ AWS.Model.Collection = Backbone.Collection.extend(
     // calls model.set() on the result, "reset" event fired when this is done
     sync: function(method, model, options)  {
 
-        var xhrOptions = $.extend( this.getXHROptions(), options );
+        var xhrOptions = AWS.util.setupAjax();
+
+        // merget global defaults, model defaults, and overrides
+        $.extend( xhrOptions, this.getXHROptions(), options );
 
         // can't call Model as "this" since urls is not a member of collection
         // FIXME
