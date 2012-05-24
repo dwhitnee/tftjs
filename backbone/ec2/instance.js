@@ -18,8 +18,9 @@ AWS.EC2 = AWS.EC2 || {};
 // AWS.EC2.Instance = AWS.EC2.Model.extend(
 AWS.EC2.Instance = AWS.Model.extend(
 {
-    idAttribute: "instanceId",    // primary key
-    listName:   "instances",  // goes under collection?  FIXME
+    idAttribute: "instanceId",    // primary key for Model
+    listId:      "instanceIds",   // name of array for requests
+    listName:    "instances",     // goes under collection?
     defaults: {},   // any needed?  FIXME
 
     urls: {
@@ -29,16 +30,17 @@ AWS.EC2.Instance = AWS.Model.extend(
         reboot: "/ec2/rebootInstance?"
     },
 
-    // get data for a single instance 
+    // get data for a single instance
     sync: function(method, model, options) {
-        var args = { instanceIds: [this.get("instanceId")] };
+        var listId = AWS.Model.prototype.listId;
+        var args = { listId: [this.get("instanceId")] };
 
-        return AWS.Model.prototype.sync.call( 
+        return AWS.Model.prototype.sync.call(
             this, "read", model, this.addRequestArgs( options, args ));
     },
     /**
      * Called for Model.sync(), expects only a single object
-     * 
+     *
      * This is called whenever this object is created.  Massage any
      * ajax data into a backbone friendly layout.
      */
@@ -54,9 +56,9 @@ AWS.EC2.Instance = AWS.Model.extend(
     parseInstances: function( response, xhr ) {
 
         this.beforeParse( response, xhr );
-        
+
         var instances = [];
-         
+
         // if there is an error don't proceed.  should we fire "error"?
         // probably not, so as not to trash what we learned in beforeParse
         // really this should be a 400/500 and handleError would have fired....
@@ -137,7 +139,7 @@ AWS.EC2.Instances = AWS.Model.Collection.extend(
     whereStateIs: function( inState ) {
         return this.filter(
             function( instance ) {
-                var state = (instance && instance.get("state")) ? 
+                var state = (instance && instance.get("state")) ?
                     instance.get("state").name : "";
                 return state == inState;
             });

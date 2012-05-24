@@ -6,7 +6,7 @@
 var AWS = AWS || {};
 
 //----------------------------------------------------------------------
-//---------------------------------------------------------------------- 
+//----------------------------------------------------------------------
 //  Backbone version of AWS models
 //----------------------------------------------------------------------
 //----------------------------------------------------------------------
@@ -27,6 +27,7 @@ AWS.Model = Backbone.Model.extend(
     //----------------------------------------------------------------------
     listName: "",     // the name of the json array returned, ex: "instances"
     idAttribute: "",  // primary key of the json objects, ex: "instanceId"
+    listId:      "",  // name of array for requests, ex: "instanceIds"
 
     server: AWS.server,
     errorMessage: undefined,  // set when ajax fails
@@ -67,7 +68,7 @@ AWS.Model = Backbone.Model.extend(
 
     /**
      * Called for Model.sync/fetch(), expects only a single object, so
-     * return only the first element of the array AWS probably handed us. 
+     * return only the first element of the array AWS probably handed us.
      */
     parse: function( response, xhr ) {
         this.beforeParse( response, xhr );
@@ -88,7 +89,7 @@ AWS.Model = Backbone.Model.extend(
     addRequestArgs: function( options, args ) {
         options = options || {};
         options.data = options.data || {};
-        $.extend( options.data, 
+        $.extend( options.data,
                   { args: JSON.stringify( args ) });
         return options;
     },
@@ -116,11 +117,11 @@ AWS.Model = Backbone.Model.extend(
 
     // NOTE: in jsonp, an auth failure results in a non-jsonp response
     // so the status=0 and the resp="error" with no other details.
-     
+
     // error event handler, not ajax error handler, BB swallows that
     handleError: function( model, resp, xhrOptions ) {
         this.errorMessage = this.errorMessage ||
-            "Failed to load " + xhrOptions.url + 
+            "Failed to load " + xhrOptions.url +
             ", code: " + resp.status+  ", status: " + resp.statusText;
 
         alert("dammit model: " + this.errorMessage );
@@ -169,11 +170,25 @@ AWS.Model.Collection = Backbone.Collection.extend(
     initialize: function( models, options ) {
         Backbone.Collection.prototype.initialize.apply( this, arguments );
 
-        // put ajax-y handlers here because BB steals 
+        // put ajax-y handlers here because BB steals
         // xhr.success and xhr.error handlers.
         // These will happen first, even before xhr.done() and xhr.error()
         this.on("reset", this.handleLoadResponse );
         this.on("error", this.handleError );
+    },
+
+    /**
+     * Requests usually require args to be of the form
+     * { instanceIds: ["i-123","i-456"] }
+     * Prepend that listname to the backbone object here
+     */
+    toJSON: function(options) {
+        var listId = AWS.Model.prototype.listId;
+        if (listId) {
+            return { listId: Backbone.Collection.prototype.toJSON( options ) };
+        } else {
+            return Backbone.Collection.prototype.toJSON( options );
+        }
     },
 
     // This is called on set() (from fetch/sync, etc).
@@ -190,8 +205,8 @@ AWS.Model.Collection = Backbone.Collection.extend(
         if (response[this.model.prototype.listName]) {
             return response[this.model.prototype.listName];
         }
-        
-        // hope this is a pure object already (ex: ctor)   
+
+        // hope this is a pure object already (ex: ctor)
         return response;
     },
 
@@ -219,7 +234,7 @@ AWS.Model.Collection = Backbone.Collection.extend(
 
         return Backbone.sync("read", model, xhrOptions );
     },
-    handleError: function( model, resp, xhrOptions ) { 
+    handleError: function( model, resp, xhrOptions ) {
         return this.model.prototype.handleError.apply( this, arguments );
     }
 

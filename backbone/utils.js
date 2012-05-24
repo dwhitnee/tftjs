@@ -13,12 +13,12 @@ AWS.util = AWS.util || {};
 
 AWS.util.setupAjax = function() {
     // set up cross domain (CORS) flags
-    
+
     var options;
 
-    var cors = true;
+    var cors = false;
     var jsonp = !cors;
-    
+
     if (jsonp) {
 
         options = { dataType: 'jsonp' };
@@ -58,7 +58,7 @@ AWS.util.setupAjax();
 //----------------------------------------------------------------------
 // handle errors found in Backbone.parse() like
 //   { "error": ["Please reauth..."] }
-//   { "error": [ 
+//   { "error": [
 //       {"code":"InvalidInstanceID.NotFound",
 //        "status":400,
 //        "message":"The instance ID alert('xss') does not exist"}]}
