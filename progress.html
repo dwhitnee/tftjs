@@ -1,0 +1,20 @@
+<html>
+
+<body>
+Here's a basic HTML5 progress bar
+
+<script>
+  var bar = document.createElement("progress");
+  bar.setAttribute("max", 100);
+  document.body.appendChild( bar );
+
+  var i=5;
+  var progress = setInterval( function() {
+    bar.setAttribute('value', i++);
+    if (i > 100) { clearInterval( progress ); }
+  }, 100 );
+</script>
+
+</body>
+</html>
+
