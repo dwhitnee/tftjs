@@ -37,3 +37,41 @@ var DefineClass = function() {
 
     return c;
 };
+
+
+// here's another way, 
+// pro: has true private methods, ctor more obvious 
+// con: how do you mixin/subclass?   var subSomething = 
+
+// var MyObject = (function()
+// {
+//   function MyObject( location ) {
+//     this.location = location;
+//   }
+  
+//   // My object does something
+//   MyObject.prototype = {
+
+//     doSomethingMethod: function() {
+
+//       var queryArgs = this.location.search;
+//       var hashArgs =  this.location.href.split("#")[1] || "";
+//       if (hashArgs) {
+//         hashArgs = "#" + hashArgs;
+//       };
+//     },
+
+//     _doSomethingQuasiPrivate: function() {
+//         return true;
+//       }
+//     };
+
+//     // Private functions
+//     function _doSomethingPrivate() {
+//         return "secret!";
+//     };
+
+//     return MyObject;
+// })();
+
+// var something = new MyObject( window.location );
