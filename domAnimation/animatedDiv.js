@@ -5,8 +5,8 @@ var AnimatedDiv = (function()
 {
   function AnimatedDiv( x, y, text ) {
     this.x = x || 100;
-    this.y = y || 100;
-    this.size = 12;
+    this.y = y || 200;
+    this.size = this.defaultSize = 12;
     this.text = text || "Hello";
     this.dx = 0;
     this.dy = 0;
@@ -84,6 +84,7 @@ var AnimatedDiv = (function()
     togglePulse: function() {
       if (this.dSize) { 
         this.dSize = 0; 
+        this.size = this.defaultSize;
       } else {
         this.dSize = 1;
       }
@@ -107,7 +108,7 @@ var AnimationController = (function()
 {
   function AnimationController( canvas ) {
     var self = this;
-    this.word = new AnimatedDiv( 50,50, "Hi" );
+    this.word = new AnimatedDiv( 80,100, "Hi" );
     canvas.append( this.word.getEl() );
     
     $("#pulse").on("click", function() { self.word.togglePulse(); });
