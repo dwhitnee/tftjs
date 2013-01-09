@@ -10,12 +10,27 @@
   border:5px solid blue;
   position: relative;
 }
+
+@-moz-keyframes flip {
+  0%   { -moz-transform:rotateX(0deg); }
+  100% { -moz-transform:rotateX(180deg); }
+}
+
+.stop {
+    -webkit-animation-play-state:paused;
+       -moz-animation-play-state:paused;
+}
+
 </style>
 </head>
 
 <body>
 
   <div class="field">  </div>
+
+  <button id="move">move</button>
+  <button id="pulse">pulse</button>
+  <button id="flip">flip</button>
 
   <script src="http://code.jquery.com/jquery-1.8.0.js"></script>
   <script src="animatedDiv.js"></script>

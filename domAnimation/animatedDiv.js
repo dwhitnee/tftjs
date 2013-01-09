@@ -6,11 +6,16 @@ var AnimatedDiv = (function()
   function AnimatedDiv( x, y, text ) {
     this.x = x || 100;
     this.y = y || 100;
+    this.size = 12;
     this.text = text || "Hello";
-    this.dx = 2;
-    this.dy = 1;
-    this.dSize = 1;
-    this.el = $('<div/>').css("position","absolute").text( this.text );
+    this.dx = 0;
+    this.dy = 0;
+    this.dSize = 0;
+    this.el = $('<div class="stop"/>').
+      css("position","absolute").
+      text( this.text );
+
+    this.el.css("-moz-animation", "flip .5s infinite linear");
   }
   
   AnimatedDiv.prototype = {
@@ -26,6 +31,9 @@ var AnimatedDiv = (function()
     
     scale: function() {
       this.size += this.dSize;
+      if ((this.size > 36) || (this.size < 8)) {
+        this.dSize = -this.dSize;
+      }
     },
 
     translate: function() {
@@ -41,8 +49,7 @@ var AnimatedDiv = (function()
     draw: function() {
       this.el.css("left", this.x);
       this.el.css("bottom", this.y);
-      this.el.css("font-size", this.size + " px");
-      // this.el.css("rotation foo");
+      this.el.css("font-size", this.size + "px");
     },
 
     // update world based on physics rules
@@ -61,6 +68,27 @@ var AnimatedDiv = (function()
       if ((this.y > y) || (this.y <= 0)) { this.bounceVertical(); }
     },
 
+    toggleMotion: function() {
+      if (this.dx) {
+        this.dx = 0;
+        this.dy = 0;
+      } else {
+        this.dx = 2;
+        this.dy = 1;
+      }
+    },
+    toggleRotation: function() {
+      this.el.toggleClass("stop");
+    },
+
+    togglePulse: function() {
+      if (this.dSize) { 
+        this.dSize = 0; 
+      } else {
+        this.dSize = 1;
+      }
+    },
+    
     _doSomethingQuasiPrivate: function() {
         return true;
       }
@@ -78,8 +106,14 @@ var AnimatedDiv = (function()
 var AnimationController = (function()
 {
   function AnimationController( canvas ) {
+    var self = this;
     this.word = new AnimatedDiv( 50,50, "Hi" );
     canvas.append( this.word.getEl() );
+    
+    $("#pulse").on("click", function() { self.word.togglePulse(); });
+    $("#move"). on("click",  function() { self.word.toggleMotion(); });
+    $("#flip"). on("click", function() { self.word.toggleRotation(); });
+
   }
   AnimationController.prototype = {
 
