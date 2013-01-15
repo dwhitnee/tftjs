@@ -2,6 +2,8 @@
 <html>
 <head>
 
+<link rel="stylesheet" type="text/css" href="lightspeed.css">
+
 <style type="text/css">
 
 .field {
@@ -16,6 +18,9 @@
   100% { -moz-transform:rotateX(180deg); }
 }
 
+.animated {
+    -moz-animation-duration: 0.5s;
+}
 .stop {
     -webkit-animation-play-state:paused;
        -moz-animation-play-state:paused;
@@ -31,6 +36,10 @@
   <button id="move">move</button>
   <button id="pulse">pulse</button>
   <button id="flip">flip</button>
+
+  <div class="animated">
+    <div class="lightSpeedIn">Woot!</div>
+  </div>
 
   <script src="http://code.jquery.com/jquery-1.8.0.js"></script>
   <script src="animatedDiv.js"></script>
