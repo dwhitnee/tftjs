@@ -14,6 +14,7 @@
 
 .arrow {
     display: none;  /* at first */
+    z-index: 1;
 }
 .n  { background: url("images/n.png") no-repeat; }
 .s  { background: url("images/s.png") no-repeat; }

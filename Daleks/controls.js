@@ -7,7 +7,7 @@ Daleks.DoctorControls = (function()
 {
   function DoctorControls( board, onAction ) {
 
-    this.dirs = ["n","ne","e","se","s","sw","w","nw"];
+    this.dirs = ["n","ne","e","se","s","sw","w","nw","x"];
     this.arrows = [];
     for (var i = 0; i < this.dirs.length; i++) {
       var arrowPiece = new Daleks.Piece("arrow " + this.dirs[i]);

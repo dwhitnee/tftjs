@@ -4,6 +4,7 @@ Daleks.GameController = (function()
     var self = this;
     this.board = new Daleks.Board( 30, 20 );
     canvas.append( this.board.getEl() );
+    this.score = 0;
   }
 
   GameController.prototype = {
@@ -47,6 +48,8 @@ Daleks.GameController = (function()
       }
       this.doctor.draw();
       this.controls.draw();
+
+      $("#score").text( this.score );
     },
 
     // start event listeners, wait for input, then move and deal
@@ -76,6 +79,18 @@ Daleks.GameController = (function()
                               this.daleks.concat( this.rubble ));
         this.draw();
       }
+      
+      // check victory
+      var victory = true;
+      for (var i in this.daleks) {
+        if (this.daleks[i]) {
+          victory = false;
+        }
+      }
+      
+      if (victory) {
+        this.winGame();
+      }
     },
 
     moveDaleks: function() {
@@ -98,8 +113,7 @@ Daleks.GameController = (function()
       for (var i in this.rubble) {
         if ( inDalek.collidedWith( this.rubble[i] )) {
           // boom
-          this.board.remove( this.daleks[inIndex] );
-          delete this.daleks[inIndex];
+          this.removeDalek( inIndex );
         }
       }
 
@@ -110,18 +124,24 @@ Daleks.GameController = (function()
           this.rubble[this.rubble.length] = rubble;            
           this.board.placeRubble( rubble, inDalek.x, inDalek.y );
 
-          this.board.remove( this.daleks[i] );
-          this.board.remove( this.daleks[inIndex] );
-          delete this.daleks[i];
-          delete this.daleks[inIndex];
+          this.removeDalek( i );
+          this.removeDalek( inIndex );
         }
       }
 
     },
 
+    removeDalek: function( index ) {
+      this.board.remove( this.daleks[index] );
+      delete this.daleks[index];
+      this.score++;
+    },
+
     // move Daleks inexorably towards the Doctor
     teleport: function() {
       alert("teleporter broken!");
+      // move doctor randomly
+      this.updateWorld();
     },
 
     // move Daleks inexorably towards the Doctor
@@ -129,10 +149,28 @@ Daleks.GameController = (function()
       alert("run!");
     },
 
+    // kill the nearest daleks and move
     sonicScrewDriver: function() {
-      alert("sonic screwdriver's busted! fix me.");
+      
+      var x = this.doctor.x;
+      var y = this.doctor.y;
+      
+      for (var i in this.daleks) {
+        var dalek = this.daleks[i];
+        if (((dalek.x === x) || (dalek.x === x+1) || (dalek.x === x-1)) &&
+            ((dalek.y === y) || (dalek.y === y+1) || (dalek.y === y-1))) 
+        {
+          this.removeDalek(i);
+        }
+      }
+
+      this.updateWorld();
     },
 
+    winGame: function() {
+      alert("yay");
+    },
+    
     endGame: function() {
       // alert("ow!");
       this.controls.disable();
