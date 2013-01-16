@@ -59,9 +59,9 @@ Daleks.Board = (function()
 
   // --- private static functions ---
 
-  function _disableInteraction(e) {
-    e.preventDefault();
-  };
+  // function _disableInteraction(e) {
+  //   e.preventDefault();
+  // };
 
   function _getRandomPosition( board ) {
     return {

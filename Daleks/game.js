@@ -54,21 +54,15 @@ Daleks.GameController = (function()
       this.gameOver = false;
       this.draw();
       
-      $(".lastStandButton"). on("click",  function() { self.lastStand(); });
-      $(".screwDriverButton"). on("click", function() { self.sonicScrewDriver(); });
-
-      this.board.getEl().on(
-        "keydown", 
+      var self = this;
+      $("body").on("keydown",
         function(e) { 
-          if (e.target === "s") { self.sonicScrewDriver(); }
-          if (e.target === "l") { self.lastStand(); }
+          switch (e.which) {
+            case 76: self.lastStand(); break; 
+            case 83: self.sonicScrewDriver();  break;
+            case 84: self.teleport(); break;
+          }
         });
-      
-      // var x = 0;
-      // do {
-      //   this.moveDaleks();
-      //   this.draw();
-      // } while (x++ < 10);
     },
 
     // the doctor made a move, respond
