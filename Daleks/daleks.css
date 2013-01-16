@@ -1,0 +1,44 @@
+.dalek {
+    background: url("images/dalek.png") no-repeat;
+}
+.doctor {
+    background: url("images/doctor.png") no-repeat;
+}
+.dead {
+    background: url("images/explosion.gif") no-repeat;
+    background-size: cover;
+}
+.rubble {
+    background: url("images/rubble.png") no-repeat;
+}
+
+.arrow {
+    display: none;  /* at first */
+}
+.n  { background: url("images/n.png") no-repeat; }
+.s  { background: url("images/s.png") no-repeat; }
+.e  { background: url("images/e.png") no-repeat; }
+.w  { background: url("images/w.png") no-repeat; }
+.ne { background: url("images/ne.png") no-repeat; }
+.nw { background: url("images/nw.png") no-repeat; }
+.se { background: url("images/se.png") no-repeat; }
+.sw { background: url("images/sw.png") no-repeat; }
+
+.arena {
+    border: 2px solid;
+    height: 324px;
+    width: 484px;
+    padding: 2px;
+}
+
+.board {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+.piece {
+    position: absolute;
+    height: 16px;
+    width: 16px;
+}

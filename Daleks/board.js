@@ -5,132 +5,77 @@ var Daleks = Daleks || {};
 //----------------------------------------------------------------------
 Daleks.Board = (function()
 {
-  function Board( w, h ) {
-    this.width = w || 20;
-    this.height = h || 20;
+  function Board( width, height ) {
+    this.width = width || 30;
+    this.height = height || 20;
 
     this.el = $('<div class="board"/>');
   }
   
-  AnimatedDiv.prototype = {
+  Board.prototype = {
 
     getEl: function() { return this.el; },
 
-    bounceHorizontal: function() {
-      this.dx = - this.dx;
-    },
-    bounceVertical: function() {
-      this.dy = - this.dy;
+    place: function( piece ) {
+      piece.draw();   // update css
+      this.getEl().append( piece.getEl() );  // add to DOM
     },
     
-    scale: function() {
-      this.size += this.dSize;
-      if ((this.size > 36) || (this.size < 8)) {
-        this.dSize = -this.dSize;
-      }
+    // put Dalek somewhere on the board more than one space away from player
+    placeDalek: function( dalek ) {
+      do {
+        var pos = _getRandomPosition( this );
+      } while (!this.dalekPositionIsLegal( pos ));
+
+      dalek.setPosition( pos.x, pos.y );
+      this.place( dalek );
     },
 
-    translate: function() {
-      this.x += this.dx;
-      this.y += this.dy;
-    },
-
-    rotate: function() {
-//      this.theta += this.dTheta;
-    },
-
-    // draw using CSS
-    draw: function() {
-      this.el.css("left", this.x);
-      this.el.css("bottom", this.y);
-      this.el.css("font-size", this.size + "px");
-    },
-
-    // update world based on physics rules
-    update: function() {
-      this.translate();
-      this.scale();
-      this.rotate();
-    },
-
-    // does this belong here?  Need a collision detector of some sort
-    bounceAtBorders: function( x, y ) {
-      if ((this.x > x) || (this.x <= 0)) {
-        this.bounceHorizontal(); 
-        // fixme
-      }
-      if ((this.y > y) || (this.y <= 0)) { this.bounceVertical(); }
-    },
-
-    toggleMotion: function() {
-      if (this.dx) {
-        this.dx = 0;
-        this.dy = 0;
-      } else {
-        this.dx = 2;
-        this.dy = 1;
-      }
-    },
-    toggleRotation: function() {
-      this.el.toggleClass("stop");
-    },
-
-    togglePulse: function() {
-      if (this.dSize) { 
-        this.dSize = 0; 
-        this.size = this.defaultSize;
-      } else {
-        this.dSize = 1;
-      }
+    // not on top of an existing dalek or within 2 of the Doctor
+    dalekPositionIsLegal: function( pos ) {
+      // check doctor
+      // TODO
+      // iterate over daleks 
+      // TODO
+      return true;
     },
     
-    _doSomethingQuasiPrivate: function() {
-        return true;
-      }
-    };
-
-    // Private functions
-    function _doSomethingPrivate() {
-        return "secret!";
-    };
-
-    return AnimatedDiv;
-})();
-
-
-var AnimationController = (function()
-{
-  function AnimationController( canvas ) {
-    var self = this;
-    this.word = new AnimatedDiv( 80,100, "Hi" );
-    canvas.append( this.word.getEl() );
-    
-    $("#pulse").on("click", function() { self.word.togglePulse(); });
-    $("#move"). on("click",  function() { self.word.toggleMotion(); });
-    $("#flip"). on("click", function() { self.word.toggleRotation(); });
-
-  }
-  AnimationController.prototype = {
-
-    // implied draw, using CSS
-    animate: function() {
-      this.updateWorld();
-      this.word.draw();
+    // place doctor randomly on board
+    placeDoctor: function( doctor ) {
+      var pos = _getRandomPosition( this );
+      doctor.setPosition( pos.x, pos.y );
+      this.place( doctor );
     },
-    
-    updateWorld: function() {
-      this.word.update();
-      this.word.bounceAtBorders( 380, 180 );
+
+    placeRubble: function( rubble, x, y ) {
+      rubble.setPosition( x, y );
+      this.place( rubble );
+    },
+
+    remove: function( piece ) {
+      piece.getEl().remove();
     }
   };
 
-  return AnimationController;
+  // --- private static functions ---
+
+  function _disableInteraction(e) {
+    e.preventDefault();
+  };
+
+  function _getRandomPosition( board ) {
+    return {
+      x: _getRandom( board.width ),
+      y: _getRandom( board.height )
+    };
+  };
+
+  // Random integer [0, max)
+  function _getRandom( max ) {
+    return Math.floor( Math.random() * max );
+  };
+  
+  return Board;
 })();
 
-var animation = new AnimationController( $(".field") );
-
-$(document).ready( function() 
-{
-  setInterval( function() { animation.animate() }, 50 );
-});
 
