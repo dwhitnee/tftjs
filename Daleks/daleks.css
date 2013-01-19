@@ -25,6 +25,46 @@
 .se { background: url("images/se.png") no-repeat; }
 .sw { background: url("images/sw.png") no-repeat; }
 
+.small {
+    font-size: small;
+}
+
+.sonicScrewDriver {
+    position: relative;
+}
+.sonicScrewDriver .screw {
+    position: absolute;
+    border: 2px solid black;
+    border-radius: 50%;
+    opacity: .75;
+}
+/* concentric circles, to be animated with display: */
+.sonicScrewDriver .screw1 {  width: 16px; height: 16px; left: 8px; top: 8px; }
+.sonicScrewDriver .screw2 {  width: 24px; height: 24px; left: 4px; top: 4px; }
+.sonicScrewDriver .screw3 {  width: 32px; height: 32px; }
+
+.gameover {
+    position: absolute;
+    z-index: 2;
+    margin: 4em;
+    padding: 2em;
+    height: 6em;
+    width: 15em;
+    line-height: 4em;
+    opacity: 0.75;
+}
+
+.victory {
+    display: none;
+    border: 5px solid green;
+/*    color: darkGreen; */
+}
+
+.loser {
+    display: none;
+    border: 5px solid red;
+}
+
 .arena {
     border: 2px solid;
     height: 324px;

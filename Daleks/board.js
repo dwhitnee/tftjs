@@ -52,6 +52,9 @@ Daleks.Board = (function()
       this.place( rubble );
     },
 
+    clear: function() {
+      this.getEl().empty();
+    },
     remove: function( piece ) {
       piece.getEl().remove();
     }

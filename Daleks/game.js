@@ -5,12 +5,20 @@ Daleks.GameController = (function()
     this.board = new Daleks.Board( 30, 20 );
     canvas.append( this.board.getEl() );
     this.score = 0;
+    this.level = 0;
   }
 
   GameController.prototype = {
 
     // create N daleks, and a player, add them to the board
-    initLevel: function( level ) {
+    startNextLevel: function() {
+      this.level++;
+      this.gameOver = false;
+      this.board.clear();
+
+      $(".gameover").hide();
+
+      this.enableKeyboardShortcuts();
 
       this.doctor = new Daleks.Piece("doctor");
 
@@ -29,12 +37,14 @@ Daleks.GameController = (function()
 
       this.rubble = [];
       this.daleks = [];
-      for (var i=0; i < 5*level; i++) {
+      for (var i = 0; i < 5 * this.level; i++) {
         this.daleks[i] = new Daleks.Piece("dalek");
         this.board.placeDalek( this.daleks[i] );
       }
 
       this.controls.update( this.doctor, this.board, this.daleks );
+
+      $("#level").text( this.level );
     },
 
     // Update the css for all elements
@@ -56,7 +66,9 @@ Daleks.GameController = (function()
     play: function() {
       this.gameOver = false;
       this.draw();
-      
+    },
+
+    enableKeyboardShortcuts: function() {
       var self = this;
       $("body").on("keydown",
         function(e) { 
@@ -66,6 +78,9 @@ Daleks.GameController = (function()
             case 84: self.teleport(); break;
           }
         });
+    },
+    disableKeyboardShortcuts: function() {
+      $("body").off("keydown");
     },
 
     // the doctor made a move, respond
@@ -80,19 +95,21 @@ Daleks.GameController = (function()
         this.draw();
       }
       
-      // check victory
+      // check for victory
       var victory = true;
       for (var i in this.daleks) {
         if (this.daleks[i]) {
           victory = false;
+          break;
         }
       }
       
       if (victory) {
-        this.winGame();
+        this.win();
       }
     },
 
+    //----------------------------------------
     moveDaleks: function() {
       for (var i in this.daleks) {// not a for loop beacuse this array is sparse
         var dalek = this.daleks[i];
@@ -101,12 +118,13 @@ Daleks.GameController = (function()
       }
     },
 
+    //----------------------------------------
     // did this dalek run into something?
     checkCollision: function( inIndex ) { 
       var inDalek = this.daleks[inIndex];
 
       if ( inDalek.collidedWith( this.doctor )) {
-        this.endGame();
+        this.lose();
         return;
       }
 
@@ -131,25 +149,30 @@ Daleks.GameController = (function()
 
     },
 
+    //----------------------------------------
     removeDalek: function( index ) {
       this.board.remove( this.daleks[index] );
       delete this.daleks[index];
       this.score++;
     },
 
-    // move Daleks inexorably towards the Doctor
+    //----------------------------------------
+    // randomly jump doctor, no guarantee of landing place
     teleport: function() {
       alert("teleporter broken!");
-      // move doctor randomly
+      // move doctor randomly  TODO
       this.updateWorld();
     },
 
+    //----------------------------------------
     // move Daleks inexorably towards the Doctor
     lastStand: function() {
+      // TODO
       alert("run!");
     },
 
-    // kill the nearest daleks and move
+    //----------------------------------------
+    // kill the nearest daleks and continue
     sonicScrewDriver: function() {
       
       var x = this.doctor.x;
@@ -167,18 +190,39 @@ Daleks.GameController = (function()
       this.updateWorld();
     },
 
-    winGame: function() {
-      alert("yay");
+    //----------------------------------------
+    win: function() {
+      this.endGame();
+
+      $(".victory").show();
+      
+      var self = this;
+      $("body").one("click", function() {
+                     self.startNextLevel();  
+                   });
+    },
+
+    //----------------------------------------
+    lose: function() {
+      this.endGame();
+
+      // TODO animate
+      this.doctor.getEl().addClass("dead");
+
+      $(".loser").show();
+      
+      var self = this;
+      $("body").one("click", function() {
+                      self.level = 0;
+                      self.startNextLevel();  
+                   });
     },
     
+    //----------------------------------------
     endGame: function() {
-      // alert("ow!");
-      this.controls.disable();
-      this.doctor.getEl().addClass("dead");
       this.gameOver = true;
-      // disable controls
-      // display score?
-      // start again button?
+      this.controls.disable();
+      this.disableKeyboardShortcuts();
     }
     
     // respond to player
@@ -191,7 +235,7 @@ Daleks.GameController = (function()
 })();
 
 var game = new Daleks.GameController( $(".arena") );
-game.initLevel( 1 );
+game.startNextLevel();
 game.play();
 
 
