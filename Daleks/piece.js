@@ -23,10 +23,26 @@ Daleks.Piece = (function()
       this.y = y;
     },
 
+    // center point of piece on screen in pixels
+    getScaledCenterPos: function() {
+      var pos = this.getScaledPos();
+      pos.x = pos.x + this.size/2;
+      pos.y = pos.y + this.size/2;
+      return pos;
+    },
+
+    getScaledPos: function() {
+      return {
+        x: this.x * this.size,
+        y: this.y * this.size
+      };
+    },
+
     // draw using CSS
     draw: function() {
-      this.el.css("left", this.x * this.size );
-      this.el.css("bottom", this.y * this.size );
+      var pos = this.getScaledPos();
+      this.el.css("left", pos.x );
+      this.el.css("bottom", pos.y );
       // this.getEl().css("display", "inherit");
     },
 

@@ -4,8 +4,8 @@ Daleks.GameController = (function()
     var self = this;
     this.board = new Daleks.Board( 30, 20 );
     canvas.append( this.board.getEl() );
-    this.score = 0;
-    this.level = 0;
+
+    this.resetGame();
   }
 
   GameController.prototype = {
@@ -14,6 +14,7 @@ Daleks.GameController = (function()
     startNextLevel: function() {
       this.level++;
       this.gameOver = false;
+      this.screwdriversLeft = 1;
       this.board.clear();
 
       $(".gameover").hide();
@@ -39,12 +40,11 @@ Daleks.GameController = (function()
       this.daleks = [];
       for (var i = 0; i < 5 * this.level; i++) {
         this.daleks[i] = new Daleks.Piece("dalek");
-        this.board.placeDalek( this.daleks[i] );
+        this.board.placeDalek( this.daleks[i], this.doctor );
       }
 
-      this.controls.update( this.doctor, this.board, this.daleks );
-
-      $("#level").text( this.level );
+      this.updateControls();
+      this.draw();
     },
 
     // Update the css for all elements
@@ -59,6 +59,7 @@ Daleks.GameController = (function()
       this.doctor.draw();
       this.controls.draw();
 
+      $("#level").text( this.level );
       $("#score").text( this.score );
     },
 
@@ -83,15 +84,22 @@ Daleks.GameController = (function()
       $("body").off("keydown");
     },
 
+    //----------------------------------------
+    // place the control arrows in legal places
+    // Take into acconut things to block arrows: daleks, borders, rubble
+    updateControls: function() {
+      this.controls.update( this.doctor, this.board, 
+                            this.daleks.concat( this.rubble ));
+    },
+
+    //----------------------------------------
     // the doctor made a move, respond
     updateWorld: function() {
       
       this.moveDaleks();  // TODO check doctor collision, too
 
       if (!this.gameOver) {
-        // pass in things to block arrows: daleks, borders, rubble
-        this.controls.update( this.doctor, this.board, 
-                              this.daleks.concat( this.rubble ));
+        this.updateControls();
         this.draw();
       }
       
@@ -159,25 +167,80 @@ Daleks.GameController = (function()
     //----------------------------------------
     // randomly jump doctor, no guarantee of landing place
     teleport: function() {
-      alert("teleporter broken!");
-      // move doctor randomly  TODO
-      this.updateWorld();
+      var epicenter = this.doctor.getScaledCenterPos();
+
+      this.board.remove( this.doctor );
+      this.controls.disable();
+
+      var disappear = new Daleks.Animation.SonicPulse( 
+        {
+          container: this.board.getEl(), 
+          epicenter: epicenter,
+          innerDiameter: 48, 
+          outerDiameter: 480 
+        });
+      disappear.start();
+
+      // reppear after disappear is done
+      var self = this;
+      var reappearFn = function() {
+        self.board.placeDoctor( self.doctor );
+        self.updateWorld();
+
+        epicenter = self.doctor.getScaledCenterPos();
+
+        var reappearAnimation = new Daleks.Animation.SonicPulse( 
+          {
+            container: self.board.getEl(), 
+            epicenter: epicenter,
+            innerDiameter: 48,
+            outerDiameter: 480,
+            reverse: true
+          });
+        reappearAnimation.start();
+      };
+      setTimeout( reappearFn, 600 );
+
     },
 
     //----------------------------------------
     // move Daleks inexorably towards the Doctor
     lastStand: function() {
-      // TODO
-      alert("run!");
+      this.controls.disable();
+
+      var self = this;
+      var nextStepFn = function() {      
+        self.updateWorld();
+        if (!self.gameOver) {
+          setTimeout( nextStepFn, 500 );
+        }
+      };
+
+      setTimeout( nextStepFn, 500 );
     },
 
     //----------------------------------------
     // kill the nearest daleks and continue
     sonicScrewDriver: function() {
-      
+   
+      if (this.screwdriversLeft <= 0) {
+        return;
+      }
+
+      this.screwdriversLeft--;
       var x = this.doctor.x;
       var y = this.doctor.y;
-      
+
+      var epicenter = this.doctor.getScaledCenterPos();
+      var animation = new Daleks.Animation.SonicPulse( 
+        {
+          container: this.board.getEl(),
+          epicenter: epicenter,
+          innerDiameter: 16,
+          outerDiameter: 48 
+        });
+
+      animation.start();
       for (var i in this.daleks) {
         var dalek = this.daleks[i];
         if (((dalek.x === x) || (dalek.x === x+1) || (dalek.x === x-1)) &&
@@ -196,10 +259,12 @@ Daleks.GameController = (function()
 
       $(".victory").show();
       
+      this.highScores.setHighScore( this.score );
+
       var self = this;
       $("body").one("click", function() {
-                     self.startNextLevel();  
-                   });
+                      self.startNextLevel();
+                    });
     },
 
     //----------------------------------------
@@ -213,7 +278,7 @@ Daleks.GameController = (function()
       
       var self = this;
       $("body").one("click", function() {
-                      self.level = 0;
+                      self.resetGame();
                       self.startNextLevel();  
                    });
     },
@@ -223,12 +288,12 @@ Daleks.GameController = (function()
       this.gameOver = true;
       this.controls.disable();
       this.disableKeyboardShortcuts();
-    }
+    },
     
-    // respond to player
-    // move: function( dir ) {
-    //   // setInterval( function() { animation.animate() }, 50 );
-    // }
+    resetGame: function() {
+      this.score = 0;
+      this.level = 0;
+    }
   };
 
   return GameController;

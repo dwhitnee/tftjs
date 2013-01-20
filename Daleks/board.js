@@ -22,22 +22,18 @@ Daleks.Board = (function()
     },
     
     // put Dalek somewhere on the board more than one space away from player
-    placeDalek: function( dalek ) {
+    placeDalek: function( dalek, doctor ) {
       do {
         var pos = _getRandomPosition( this );
-      } while (!this.dalekPositionIsLegal( pos ));
+      } while (!this.dalekPositionIsLegal( pos, doctor ));
 
       dalek.setPosition( pos.x, pos.y );
       this.place( dalek );
     },
 
     // not on top of an existing dalek or within 2 of the Doctor
-    dalekPositionIsLegal: function( pos ) {
-      // check doctor
-      // TODO
-      // iterate over daleks 
-      // TODO
-      return true;
+    dalekPositionIsLegal: function( pos, doctor ) {
+      return (pos.x !== doctor.x) && (pos.y !== doctor.y);
     },
     
     // place doctor randomly on board
@@ -61,11 +57,6 @@ Daleks.Board = (function()
   };
 
   // --- private static functions ---
-
-  // function _disableInteraction(e) {
-  //   e.preventDefault();
-  // };
-
   function _getRandomPosition( board ) {
     return {
       x: _getRandom( board.width ),

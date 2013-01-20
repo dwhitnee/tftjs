@@ -18,7 +18,7 @@ Daleks.DoctorControls = (function()
                             function(e) {
                               var dir = e.data.dir;
                               onAction.fn.call( onAction.scope, dir );
-                              return false;  // stop propagation
+                              return false;  // stop propagation of event
                             });
     }
   }

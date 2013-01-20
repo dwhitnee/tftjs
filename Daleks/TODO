@@ -1,8 +1,10 @@
-Disable movement after end game
-Start new game
-Start new level
+X Disable movement after end game
+X Start new game
+X Start new level
 
-Teleport
+X Animate 3 cirlces positioned absolutely with varying
+
+X Teleport
 Place doctor safely at start up
 Last stand
 
@@ -10,10 +12,10 @@ Toggle grid?
 
 
 Animation in general
- Dalek motion
+ Dalek motion ***
  Doctor motion
- screw driver
- teleport?
+ X screw driver
+ X teleport?
 
 Sound
   screw driver

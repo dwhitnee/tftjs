@@ -29,19 +29,22 @@
     font-size: small;
 }
 
-.sonicScrewDriver {
-    position: relative;
-}
-.sonicScrewDriver .screw {
+.sonicPulse {
     position: absolute;
-    border: 2px solid black;
+}
+.sonicPulse .pulse {
+    position: absolute;
+    display: none;
+    border: 1px solid black;
     border-radius: 50%;
     opacity: .75;
 }
 /* concentric circles, to be animated with display: */
-.sonicScrewDriver .screw1 {  width: 16px; height: 16px; left: 8px; top: 8px; }
-.sonicScrewDriver .screw2 {  width: 24px; height: 24px; left: 4px; top: 4px; }
-.sonicScrewDriver .screw3 {  width: 32px; height: 32px; }
+.sonicPulse .pulse1 {  width: 16px; height: 16px; left: 8px; top: 8px; }
+.sonicPulse .pulse2 {  width: 20px; height: 20px; left: 6px; top: 6px; }
+.sonicPulse .pulse3 {  width: 24px; height: 24px; left: 4px; top: 4px; }
+.sonicPulse .pulse4 {  width: 28px; height: 28px; left: 2px; top: 2px; }
+.sonicPulse .pulse5 {  width: 32px; height: 32px; }
 
 .gameover {
     position: absolute;
@@ -50,19 +53,25 @@
     padding: 2em;
     height: 6em;
     width: 15em;
+    border-radius: 1em;
     line-height: 4em;
     opacity: 0.75;
+    background: grey;
+    border: 5px solid;
 }
 
+.banner {
+    font-weight: bold;
+    opacity: 1.0;
+}
 .victory {
     display: none;
-    border: 5px solid green;
-/*    color: darkGreen; */
+    border-color: green;
 }
 
 .loser {
     display: none;
-    border: 5px solid red;
+    border-color: red;
 }
 
 .arena {
