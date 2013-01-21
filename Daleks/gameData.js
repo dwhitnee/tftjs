@@ -20,7 +20,7 @@ Daleks.GameData = (function()
     },
     
     getHighScore: function() {
-      return _getGameData().score;
+      return _getGameData().score || 0;
     }
   };
 
@@ -43,5 +43,5 @@ Daleks.GameData = (function()
     localStorage.setItem('highScore', JSON.stringify( data ));
   };
  
-  return HighScores;
+  return GameData;
 })();

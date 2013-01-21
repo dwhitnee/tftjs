@@ -3,6 +3,8 @@ Daleks.GameController = (function()
   function GameController( canvas ) {
     var self = this;
     this.board = new Daleks.Board( 30, 20 );
+    this.gameData = new Daleks.GameData();
+
     canvas.append( this.board.getEl() );
 
     this.resetGame();
@@ -18,6 +20,7 @@ Daleks.GameController = (function()
       this.board.clear();
 
       $(".gameover").hide();
+      $("#highScores").hide();
 
       this.enableKeyboardShortcuts();
 
@@ -161,7 +164,12 @@ Daleks.GameController = (function()
     removeDalek: function( index ) {
       this.board.remove( this.daleks[index] );
       delete this.daleks[index];
-      this.score++;
+      this.updateScore( 1 );
+    },
+
+    updateScore: function( value ) {
+      this.score += value;
+      $("#score").text( this.score );
     },
 
     //----------------------------------------
@@ -255,12 +263,10 @@ Daleks.GameController = (function()
 
     //----------------------------------------
     win: function() {
-      this.endGame();
+      this.endRound();
 
       $(".victory").show();
       
-      this.highScores.setHighScore( this.score );
-
       var self = this;
       $("body").one("click", function() {
                       self.startNextLevel();
@@ -269,22 +275,27 @@ Daleks.GameController = (function()
 
     //----------------------------------------
     lose: function() {
-      this.endGame();
+      this.endRound();
 
       // TODO animate
       this.doctor.getEl().addClass("dead");
 
       $(".loser").show();
       
+      this.gameData.setHighScore( this.score );
+      $("#highScore").text( this.gameData.getHighScore() );
+      $("#highScores").show();
+
       var self = this;
       $("body").one("click", function() {
                       self.resetGame();
                       self.startNextLevel();  
                    });
+
     },
     
     //----------------------------------------
-    endGame: function() {
+    endRound: function() {
       this.gameOver = true;
       this.controls.disable();
       this.disableKeyboardShortcuts();
