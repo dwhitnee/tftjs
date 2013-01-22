@@ -7,5 +7,6 @@
 .#*
 local.js
 */*.min.js
+*/build/*
 
 backbone/backbone.js
