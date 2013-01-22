@@ -25,24 +25,23 @@ Daleks.Board = (function()
         var pos = _getRandomPosition( this );
       } while (!this.dalekPositionIsLegal( pos, doctor ));
 
-      dalek.setPosition( pos.x, pos.y );
+      dalek.setPosition( pos );
       this.place( dalek );
     },
 
     // not on top of an existing dalek or within 2 of the Doctor
     dalekPositionIsLegal: function( pos, doctor ) {
-      return (pos.x !== doctor.x) && (pos.y !== doctor.y);
+      return (pos.x !== doctor.pos.x) && (pos.y !== doctor.pos.y);
     },
     
     // place doctor randomly on board
     placeDoctor: function( doctor ) {
-      var pos = _getRandomPosition( this );
-      doctor.setPosition( pos.x, pos.y );
+      doctor.setPosition( _getRandomPosition( this ));
       this.place( doctor );
     },
 
-    placeRubble: function( rubble, x, y ) {
-      rubble.setPosition( x, y );
+    placeRubble: function( rubble, pos ) {
+      rubble.setPosition( pos );
       this.place( rubble );
     },
 

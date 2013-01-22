@@ -59,7 +59,7 @@ Daleks.GameController = (function()
     // TODO: animate motion
     draw: function() {
       for (var i in this.daleks) {
-        this.daleks[i].draw();
+        // this.daleks[i].draw();
       }
       for (i in this.rubble) {
         this.rubble[i].draw();
@@ -101,7 +101,7 @@ Daleks.GameController = (function()
     updateWorld: function() {
       
       this.moveDaleks();
-      this.checkCollisions();
+      this.checkCollisions();  // TODO remove pieces after animation is complete
 
       if (!this.roundOver) {
         this.updateControls();
@@ -164,7 +164,7 @@ Daleks.GameController = (function()
 
             var rubble = new Daleks.Piece("rubble");
             this.rubble[this.rubble.length] = rubble;            
-            this.board.placeRubble( rubble, this.daleks[i].x, this.daleks[i].y );
+            this.board.placeRubble( rubble, this.daleks[i].pos );
             this.removeDalek( i );   // will this screw up iteration?
             this.removeDalek( j );
             break;
@@ -235,11 +235,11 @@ Daleks.GameController = (function()
       var nextStepFn = function() {      
         self.updateWorld();
         if (!self.roundOver) {
-          setTimeout( nextStepFn, 500 );
+          setTimeout( nextStepFn, 400 );
         }
       };
 
-      setTimeout( nextStepFn, 500 );
+      nextStepFn.call();
     },
 
     //----------------------------------------
@@ -251,8 +251,8 @@ Daleks.GameController = (function()
       }
 
       this.screwdriversLeft--;
-      var x = this.doctor.x;
-      var y = this.doctor.y;
+      var x = this.doctor.pos.x;
+      var y = this.doctor.pos.y;
 
       var epicenter = this.doctor.getScaledCenterPos();
       var animation = new Daleks.Animation.SonicPulse( 
@@ -265,9 +265,9 @@ Daleks.GameController = (function()
 
       animation.start();
       for (var i in this.daleks) {
-        var dalek = this.daleks[i];
-        if (((dalek.x === x) || (dalek.x === x+1) || (dalek.x === x-1)) &&
-            ((dalek.y === y) || (dalek.y === y+1) || (dalek.y === y-1))) 
+        var pos = this.daleks[i].pos;
+        if (((pos.x === x) || (pos.x === x+1) || (pos.x === x-1)) &&
+            ((pos.y === y) || (pos.y === y+1) || (pos.y === y-1))) 
         {
           this.removeDalek(i);
         }

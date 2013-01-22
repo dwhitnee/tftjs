@@ -4,8 +4,7 @@
 Daleks.Piece = (function()
 {
   function Piece( className ) {
-    this.x = 0;
-    this.y = 0;
+    this.pos = { x: 0, y: 0 };
     this.size = 16;
 
     this.el = $('<div class="piece ' + className + '"/>');
@@ -16,14 +15,15 @@ Daleks.Piece = (function()
 
     getEl: function() { return this.el; },
 
-    setPosition: function( x, y ) {
-      this.x = x;
-      this.y = y;
+    // deep copy new position
+    setPosition: function( inPos ) {
+      this.pos.x = inPos.x;
+      this.pos.y = inPos.y;
     },
 
     // center point of piece on screen in pixels
     getScaledCenterPos: function() {
-      var pos = this.getScaledPos( this );
+      var pos = this.getScaledPos( this.pos );
       pos.x = pos.x + this.size/2;
       pos.y = pos.y + this.size/2;
       return pos;
@@ -36,62 +36,72 @@ Daleks.Piece = (function()
       };
     },
 
+    //----------------------------------------
     // move smoothly from one point to another
-    animate: function( from, to ) {
-      var start = this.getScaledPos( from );
-      var end   = this.getScaledPos( to );
+    // this is done asynchronously and ends when "to" point is reached.
+    animateTo: function( toPos ) {
+      var start = this.getScaledPos( this.pos );
+      var end   = this.getScaledPos( toPos );
 
       var interval = {
         x: end.x - start.x,
         y: end.y - start.y
       };
 
+      var frameCount = 8;
       var self = this;
       var i = 1;
       var nextFrame = function() {
-        self.drawAt( start.x + (interval.x/5)*i, start.y + (interval.y/5)*i);
-        if (++i < 5) {
+        self.drawAt( { x: start.x + (interval.x/frameCount)*i, 
+                       y: start.y + (interval.y/frameCount)*i });
+        if (++i <= frameCount) {
           setTimeout( nextFrame, 50 );
          }
       };
-      setTimeout( nextFrame, 50 );
+      nextFrame.call();
     },
 
     draw: function() {
-      this.drawAt( this.getScaledPos( this ));
+      this.drawAt( this.getScaledPos( this.pos ));
     },
         
     // draw using CSS
     drawAt: function( pos ) {
       this.el.css("left", pos.x );
       this.el.css("bottom", pos.y );
-      window.console.log( pos.x + "," + pos.y );
     },
 
+    //----------------------------------------
     // move piece one towards given location (the Doctor)
-    // TODO: animate this
     moveTowards: function( dest ) {
-      var from = { 
-        x: this.x,
-        y: this.y
-      };
-      var to = {
-        x: this.x,
-        y: this.y
+      var to = {  // deep copy
+        x: this.pos.x,
+        y: this.pos.y
       };
 
-      if (this.x > dest.x) {  this.x--; to.x--; }
-      if (this.x < dest.x) {  this.x++; to.x++; }
-      if (this.y > dest.y) {  this.y--; to.y--; }
-      if (this.y < dest.y) {  this.y++; to.y++; }
+      if (this.pos.x > dest.pos.x) { to.x--; }
+      if (this.pos.x < dest.pos.x) { to.x++; }
+      if (this.pos.y > dest.pos.y) { to.y--; }
+      if (this.pos.y < dest.pos.y) { to.y++; }
       
-      // this.animate( from, to );
+      this.moveTo( to );
+    },
+
+    //----------------------------------------
+    // update logical position, and animate a transition to there on screen
+    moveTo: function( newPos ) {
+      // start animation first (perhaps set should be a after-callback?
+      this.animateTo( newPos );
+
+      this.setPosition( newPos );
     },
     
     // @return true if two distinct pieces are in the same place 
     //              (and not identical)
     collidedWith: function( target ) {
-      return (this != target) && (this.x === target.x) && (this.y === target.y);
+      return (this != target) && 
+        (this.pos.x === target.pos.x) && 
+        (this.pos.y === target.pos.y);
     },          
 
     hide: function() {

@@ -30,8 +30,7 @@ Daleks.DoctorControls = (function()
     },
 
     moveDoctor: function( doctor, dir ) {
-      var newPos = _getNewPosition( doctor.x, doctor.y, dir );
-      doctor.setPosition( newPos.x, newPos.y );
+      doctor.setPosition( _getNewPosition( doctor.pos, dir ));
     },
     
     // move arrow pieces around the doctor
@@ -41,11 +40,11 @@ Daleks.DoctorControls = (function()
       for (var i = 0; i < this.arrows.length; i++) {
         var arrow = this.arrows[i];
 
-        var arrowPos = _getNewPosition( doctor.x, doctor.y, arrow.dir );
+        var arrowPos = _getNewPosition( doctor.pos, arrow.dir );
         var x = arrowPos.x;
         var y = arrowPos.y;
       
-        arrow.setPosition( x, y );        // disable illegal arrows
+        arrow.setPosition( arrowPos );        // disable illegal arrows
         var valid = true;
 
         // can't move off board
@@ -56,7 +55,7 @@ Daleks.DoctorControls = (function()
         } else {
           // can't move into an object
           for (var j in obstacles) {
-            if ((x == obstacles[j].x) && (y == obstacles[j].y)) {
+            if ((x == obstacles[j].pos.x) && (y == obstacles[j].pos.y)) {
               valid = false;
               break;
             }
@@ -80,12 +79,14 @@ Daleks.DoctorControls = (function()
   };
 
   // @return pos if we moved in direction given (n,s,e,w,ne,nw,se,sw)
-  function _getNewPosition( x, y, dir ) {
-    if (dir.match("n")) {  y += 1; }
-    if (dir.match("e")) {  x += 1; }
-    if (dir.match("s")) {  y -= 1; }
-    if (dir.match("w")) {  x -= 1; }
-    return { x:x, y:y };
+  function _getNewPosition( pos, dir ) {
+    var newPos = { x: pos.x, y: pos.y };
+
+    if (dir.match("n")) {  newPos.y += 1; }
+    if (dir.match("e")) {  newPos.x += 1; }
+    if (dir.match("s")) {  newPos.y -= 1; }
+    if (dir.match("w")) {  newPos.x -= 1; }
+    return newPos;
   };
   
   return DoctorControls;

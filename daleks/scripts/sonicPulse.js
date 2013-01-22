@@ -9,7 +9,8 @@ Daleks.Animation.SonicPulse = (function()
 
     this.container = args.container;
     this.reverse = args.reverse;  // whether to expand or collapse
-    this.setPosition( args.epicenter.x, args.epicenter.y );
+    this.pos = {};
+    this.setPosition( args.epicenter );
     this.innerDiameter = args.innerDiameter || 16;
     this.outerDiameter = args.outerDiameter || 48;
     this.numCircles = 5;
@@ -40,17 +41,17 @@ Daleks.Animation.SonicPulse = (function()
 
     getEl: function() { return this.el; },
 
-    setPosition: function( x, y ) {
-      this.x = x;
-      this.y = y;
+    setPosition: function( inPos ) {
+      this.pos.x = inPos.x;
+      this.pos.y = inPos.y;
     },
 
     // draw using CSS
     draw: function() {
       // center bounding box on 16px block
       // why the 1?
-      this.el.css("left",   this.x - this.outerDiameter/2 - 1);
-      this.el.css("bottom", this.y - this.outerDiameter/2 + 1);
+      this.el.css("left",   this.pos.x - this.outerDiameter/2 - 1);
+      this.el.css("bottom", this.pos.y - this.outerDiameter/2 + 1);
     },
 
     inward: function() {
