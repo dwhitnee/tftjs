@@ -1,5 +1,3 @@
-var Daleks = Daleks || {};
-
 //----------------------------------------------------------------------
 // A Piece occupies a space on the board that no one else can occupy.
 //----------------------------------------------------------------------
@@ -25,34 +23,69 @@ Daleks.Piece = (function()
 
     // center point of piece on screen in pixels
     getScaledCenterPos: function() {
-      var pos = this.getScaledPos();
+      var pos = this.getScaledPos( this );
       pos.x = pos.x + this.size/2;
       pos.y = pos.y + this.size/2;
       return pos;
     },
 
-    getScaledPos: function() {
+    getScaledPos: function( pos ) {
       return {
-        x: this.x * this.size,
-        y: this.y * this.size
+        x: pos.x * this.size,
+        y: pos.y * this.size
       };
     },
 
-    // draw using CSS
+    // move smoothly from one point to another
+    animate: function( from, to ) {
+      var start = this.getScaledPos( from );
+      var end   = this.getScaledPos( to );
+
+      var interval = {
+        x: end.x - start.x,
+        y: end.y - start.y
+      };
+
+      var self = this;
+      var i = 1;
+      var nextFrame = function() {
+        self.drawAt( start.x + (interval.x/5)*i, start.y + (interval.y/5)*i);
+        if (++i < 5) {
+          setTimeout( nextFrame, 50 );
+         }
+      };
+      setTimeout( nextFrame, 50 );
+    },
+
     draw: function() {
-      var pos = this.getScaledPos();
+      this.drawAt( this.getScaledPos( this ));
+    },
+        
+    // draw using CSS
+    drawAt: function( pos ) {
       this.el.css("left", pos.x );
       this.el.css("bottom", pos.y );
-      // this.getEl().css("display", "inherit");
+      window.console.log( pos.x + "," + pos.y );
     },
 
     // move piece one towards given location (the Doctor)
     // TODO: animate this
     moveTowards: function( dest ) {
-      if (this.x > dest.x) {  this.x--; }
-      if (this.x < dest.x) {  this.x++; }
-      if (this.y > dest.y) {  this.y--; }
-      if (this.y < dest.y) {  this.y++; }
+      var from = { 
+        x: this.x,
+        y: this.y
+      };
+      var to = {
+        x: this.x,
+        y: this.y
+      };
+
+      if (this.x > dest.x) {  this.x--; to.x--; }
+      if (this.x < dest.x) {  this.x++; to.x++; }
+      if (this.y > dest.y) {  this.y--; to.y--; }
+      if (this.y < dest.y) {  this.y++; to.y++; }
+      
+      // this.animate( from, to );
     },
     
     // @return true if two distinct pieces are in the same place 
