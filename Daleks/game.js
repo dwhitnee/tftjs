@@ -13,27 +13,26 @@ Daleks.GameController = (function()
   GameController.prototype = {
 
     // create N daleks, and a player, add them to the board
+    // start event listeners, wait for input, then move and deal
     startNextLevel: function() {
       this.level++;
-      this.gameOver = false;
       this.screwdriversLeft = 1;
+      this.roundOver = false;
+      this.isLastStand = false;
       this.board.clear();
 
       $(".gameover").hide();
-      $("#highScores").hide();
+      $(".loading").hide();
+      $("#highScore").text( this.gameData.getHighScore() );
 
       this.enableKeyboardShortcuts();
 
       this.doctor = new Daleks.Piece("doctor");
 
-      var handleMove = function( dir ) { 
-        this.controls.moveDoctor( this.doctor, dir ); 
-        this.updateWorld(); 
-      };
       this.controls = new Daleks.DoctorControls( 
         this.board, 
         {
-          fn: handleMove, 
+          fn: this.handleMove, 
           scope: this 
         });
 
@@ -50,6 +49,12 @@ Daleks.GameController = (function()
       this.draw();
     },
 
+    // callback for an arrow being clicked or other move instruction
+    handleMove: function( dir ) { 
+      this.controls.moveDoctor( this.doctor, dir ); 
+      this.updateWorld(); 
+    },
+
     // Update the css for all elements
     // TODO: animate motion
     draw: function() {
@@ -64,12 +69,6 @@ Daleks.GameController = (function()
 
       $("#level").text( this.level );
       $("#score").text( this.score );
-    },
-
-    // start event listeners, wait for input, then move and deal
-    play: function() {
-      this.gameOver = false;
-      this.draw();
     },
 
     enableKeyboardShortcuts: function() {
@@ -91,17 +90,20 @@ Daleks.GameController = (function()
     // place the control arrows in legal places
     // Take into acconut things to block arrows: daleks, borders, rubble
     updateControls: function() {
-      this.controls.update( this.doctor, this.board, 
-                            this.daleks.concat( this.rubble ));
+      if (!this.isLastStand) {
+        this.controls.update( this.doctor, this.board, 
+                              this.daleks.concat( this.rubble ));
+      }
     },
 
     //----------------------------------------
     // the doctor made a move, respond
     updateWorld: function() {
       
-      this.moveDaleks();  // TODO check doctor collision, too
+      this.moveDaleks();
+      this.checkCollisions();
 
-      if (!this.gameOver) {
+      if (!this.roundOver) {
         this.updateControls();
         this.draw();
       }
@@ -116,7 +118,7 @@ Daleks.GameController = (function()
       }
       
       if (victory) {
-        this.win();
+        this.winRound();
       }
     },
 
@@ -125,36 +127,48 @@ Daleks.GameController = (function()
       for (var i in this.daleks) {// not a for loop beacuse this array is sparse
         var dalek = this.daleks[i];
         dalek.moveTowards( this.doctor );
-        this.checkCollision( i );
       }
     },
 
     //----------------------------------------
-    // did this dalek run into something?
-    checkCollision: function( inIndex ) { 
-      var inDalek = this.daleks[inIndex];
+    // did this dalek run into the Doctor or rubble?
+    dalekCollidedWithLandscape: function( inDalek ) { 
 
       if ( inDalek.collidedWith( this.doctor )) {
-        this.lose();
-        return;
+        this.endGame();
+        return false;
       }
 
       for (var i in this.rubble) {
         if ( inDalek.collidedWith( this.rubble[i] )) {
-          // boom
-          this.removeDalek( inIndex );
+          return true;            // boom
         }
       }
+      return false;
+    },
 
+    //----------------------------------------
+    // make rubble where Daleks impacted each other
+    // check for impact with existing landmarks first, 
+    // then with other daleks - which will make a landmark for others to hit
+    checkCollisions: function() {
       for (i in this.daleks) {
-        if (inDalek.collidedWith( this.daleks[i] )) {
-          // boom!
-          var rubble = new Daleks.Piece("rubble");
-          this.rubble[this.rubble.length] = rubble;            
-          this.board.placeRubble( rubble, inDalek.x, inDalek.y );
 
+        if (this.dalekCollidedWithLandscape( this.daleks[i] )) {
           this.removeDalek( i );
-          this.removeDalek( inIndex );
+          continue;
+        }
+
+        for (j in this.daleks) {
+          if (this.daleks[i].collidedWith( this.daleks[j] )) {   // boom!
+
+            var rubble = new Daleks.Piece("rubble");
+            this.rubble[this.rubble.length] = rubble;            
+            this.board.placeRubble( rubble, this.daleks[i].x, this.daleks[i].y );
+            this.removeDalek( i );   // will this screw up iteration?
+            this.removeDalek( j );
+            break;
+          }
         }
       }
 
@@ -214,12 +228,13 @@ Daleks.GameController = (function()
     //----------------------------------------
     // move Daleks inexorably towards the Doctor
     lastStand: function() {
+      this.isLastStand = true;
       this.controls.disable();
 
       var self = this;
       var nextStepFn = function() {      
         self.updateWorld();
-        if (!self.gameOver) {
+        if (!self.roundOver) {
           setTimeout( nextStepFn, 500 );
         }
       };
@@ -262,7 +277,7 @@ Daleks.GameController = (function()
     },
 
     //----------------------------------------
-    win: function() {
+    winRound: function() {
       this.endRound();
 
       $(".victory").show();
@@ -274,7 +289,7 @@ Daleks.GameController = (function()
     },
 
     //----------------------------------------
-    lose: function() {
+    endGame: function() {
       this.endRound();
 
       // TODO animate
@@ -296,7 +311,7 @@ Daleks.GameController = (function()
     
     //----------------------------------------
     endRound: function() {
-      this.gameOver = true;
+      this.roundOver = true;
       this.controls.disable();
       this.disableKeyboardShortcuts();
     },
@@ -312,7 +327,6 @@ Daleks.GameController = (function()
 
 var game = new Daleks.GameController( $(".arena") );
 game.startNextLevel();
-game.play();
 
 
 $(document).ready( function() 

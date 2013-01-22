@@ -12,6 +12,15 @@ h1 {
 #highScores {
     padding-top: 1em;
 }
+#instructions {
+    padding-top: 5em;
+}
+.loading {
+    background: url("images/loading.gif") 240px 120px no-repeat;
+    height:200px;
+    width:300px;
+
+}
 .dalek {
     background: url("images/dalek.png") no-repeat;
 }

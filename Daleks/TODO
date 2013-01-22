@@ -1,22 +1,44 @@
 X Disable movement after end game
 X Start new game
 X Start new level
-
 X Animate 3 cirlces positioned absolutely with varying
-
 X Teleport
-Place doctor safely at start up
-Last stand
+X Place doctor safely at start up
+X Last stand
+X High Score?
+X Disable arrows on last stand
+X Fix dalek collision check to run only after all daleks moved.
+X Loading... page (spinner or just text?)
+X Animation
+ X screw driver
+ X teleport
+
+Die better (one animation)
 
 Toggle grid?
 
+Named high score (central server? IAM to S3 or Dynamo?)
+  - version this
 
 Animation in general
  Dalek motion ***
  Doctor motion
- X screw driver
- X teleport?
+ Animation engine to move Piece from A to B
+
+Move to separate repo.
+Tests
+Help screen (l)ast stand t)eleport s)onic screwdriver
+
+Install on web
+Phone support
+Phone Gap app
 
 Sound
   screw driver
   teleport
+
+YUICompressor
+Google Compile
+  https://developers.google.com/closure/compiler/
+
+Tweet/Facebook icon
