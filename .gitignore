@@ -6,7 +6,7 @@
 */#*
 .#*
 local.js
+*/*.min.js
 
 backbone/backbone.js
 
-*/*_compiled.js

@@ -16,23 +16,23 @@ h1 {
     padding-top: 5em;
 }
 .loading {
-    background: url("images/loading.gif") 240px 120px no-repeat;
+    background: url("../images/loading.gif") 240px 120px no-repeat;
     height:200px;
     width:300px;
 
 }
 .dalek {
-    background: url("images/dalek.png") no-repeat;
+    background: url("../images/dalek.png") no-repeat;
 }
 .doctor {
-    background: url("images/doctor.png") no-repeat;
+    background: url("../images/doctor.png") no-repeat;
 }
 .dead {
-    background: url("images/explosion.gif") no-repeat;
+    background: url("../images/explosion.gif") no-repeat;
     background-size: cover;
 }
 .rubble {
-    background: url("images/rubble.png") no-repeat;
+    background: url("../images/rubble.png") no-repeat;
 }
 
 .arrow {

@@ -4,18 +4,25 @@
 # file
 #----------------------------------------------------------------------
 
-closure = "/Users/dwhitney/Sites/compiler-latest/compiler.jar"
-closure_args = %w{
+require 'fileutils'
+
+srcDir = "scripts/"
+buildDir = "build/"
+
+closure    = "/Users/dwhitney/Sites/build/compiler-latest/compiler.jar"
+externsDir = "/Users/dwhitney/Sites/build/"
+
+closure_args = %W{
   --compilation_level=ADVANCED_OPTIMIZATIONS
-  --externs jquery-1.8.externs.js
   --warning_level=VERBOSE
+  --externs #{externsDir}jquery-1.8.externs.js
 }
 
 # how to get extern_url into cli?
 # http://closure-compiler.googlecode.com/svn/trunk/contrib/externs/jquery-1.8.js
 
 manifest = "Manifest"
-output = ARGV[0] || "scripts_compiled.js"
+output = ARGV[0] || "#{buildDir}scripts.min.js"
 
 #----------------------------------------
 def readManifest( manifest )
@@ -35,10 +42,12 @@ end
 scripts = readManifest( manifest )
 cmd = "java -jar #{closure} #{closure_args.join(" ")}"
 scripts.each do |script|
-  cmd << " --js #{script}"
+  cmd << " --js #{srcDir}#{script}"
 end
 cmd << " --js_output_file=#{output}"
 
 puts cmd
+
+FileUtils.mkdir_p buildDir
 
 system( cmd );
