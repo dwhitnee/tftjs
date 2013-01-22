@@ -1,4 +1,7 @@
+# Manifest file of Daleks JS files in dependency order
+# Pass this to build with jquery externs
 # http://code.jquery.com/jquery-1.8.0.js
+
 daleks.js
 piece.js
 board.js
