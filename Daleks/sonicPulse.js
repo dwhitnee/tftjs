@@ -1,4 +1,3 @@
-var Daleks = Daleks || {};
 Daleks.Animation = Daleks.Animation || {};
 
 //----------------------------------------------------------------------

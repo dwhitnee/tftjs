@@ -8,3 +8,5 @@
 local.js
 
 backbone/backbone.js
+
+*/*_compiled.js

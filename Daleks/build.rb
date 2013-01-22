@@ -5,6 +5,15 @@
 #----------------------------------------------------------------------
 
 closure = "/Users/dwhitney/Sites/compiler-latest/compiler.jar"
+closure_args = %w{
+  --compilation_level=ADVANCED_OPTIMIZATIONS
+  --externs jquery-1.8.externs.js
+  --warning_level=VERBOSE
+}
+
+# how to get extern_url into cli?
+# http://closure-compiler.googlecode.com/svn/trunk/contrib/externs/jquery-1.8.js
+
 manifest = "Manifest"
 output = ARGV[0] || "scripts_compiled.js"
 
@@ -24,7 +33,7 @@ end
 
 #----------------------------------------
 scripts = readManifest( manifest )
-cmd = "java -jar #{closure} "
+cmd = "java -jar #{closure} #{closure_args.join(" ")}"
 scripts.each do |script|
   cmd << " --js #{script}"
 end

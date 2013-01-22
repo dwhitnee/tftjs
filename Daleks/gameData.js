@@ -1,9 +1,7 @@
-var Daleks = Daleks || {};
-
 //----------------------------------------------------------------------
 // Game meta data
 //----------------------------------------------------------------------
-Daleks.GameData = (function()
+Daleks.GameData = (function( localStorage, JSON )
 {
   function GameData() {
 
@@ -34,7 +32,7 @@ Daleks.GameData = (function()
       return {};
     }
   }
-
+  
   //----------------------------------------
   function _saveHighScore( score ) {
     var data = _getGameData();
@@ -44,4 +42,4 @@ Daleks.GameData = (function()
   };
  
   return GameData;
-})();
+})( window.localStorage, window.JSON );

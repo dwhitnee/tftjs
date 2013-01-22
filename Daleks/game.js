@@ -152,14 +152,14 @@ Daleks.GameController = (function()
     // check for impact with existing landmarks first, 
     // then with other daleks - which will make a landmark for others to hit
     checkCollisions: function() {
-      for (i in this.daleks) {
+      for (var i in this.daleks) {
 
         if (this.dalekCollidedWithLandscape( this.daleks[i] )) {
           this.removeDalek( i );
           continue;
         }
 
-        for (j in this.daleks) {
+        for (var j in this.daleks) {
           if (this.daleks[i].collidedWith( this.daleks[j] )) {   // boom!
 
             var rubble = new Daleks.Piece("rubble");
