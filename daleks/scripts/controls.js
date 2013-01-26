@@ -3,6 +3,7 @@
 //----------------------------------------------------------------------
 Daleks.DoctorControls = (function()
 {
+  "use strict";
   function DoctorControls( board, onAction ) {
 
     this.dirs = ["n","ne","e","se","s","sw","w","nw","x"];
@@ -30,7 +31,13 @@ Daleks.DoctorControls = (function()
     },
 
     moveDoctor: function( doctor, dir ) {
-      doctor.setPosition( _getNewPosition( doctor.pos, dir ));
+      this.disable();  // update() will reenable
+
+      // animate
+      doctor.slideTo( _getNewPosition( doctor.pos, dir ));
+
+      // don't animate
+      // doctor.setPosition( _getNewPosition( doctor.pos, dir ));
     },
     
     // move arrow pieces around the doctor

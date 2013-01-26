@@ -5,6 +5,8 @@ Daleks.Animation = Daleks.Animation || {};
 //----------------------------------------------------------------------
 Daleks.Animation.SonicPulse = (function()
 {
+  "use strict";
+
   function SonicPulse( args ) {
 
     this.container = args.container;

@@ -15,6 +15,7 @@ externsDir = "/Users/dwhitney/Sites/build/"
 closure_args = %W{
   --compilation_level=ADVANCED_OPTIMIZATIONS
   --warning_level=VERBOSE
+  --language_in=ECMASCRIPT5_STRICT
   --externs #{externsDir}jquery-1.8.externs.js
 }
 

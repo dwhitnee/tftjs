@@ -3,9 +3,13 @@
 //----------------------------------------------------------------------
 Daleks.Piece = (function()
 {
-  function Piece( className ) {
+  function Piece( className, args ) {
+    args = args || {};
+
     this.pos = { x: 0, y: 0 };
     this.size = 16;
+    this.isAnimating = false;
+    this.frameCount = args.frameCount || 8;
 
     this.el = $('<div class="piece ' + className + '"/>');
     // this.hide();   // hide until position set
@@ -36,10 +40,17 @@ Daleks.Piece = (function()
       };
     },
 
+    // a Piece finished animating.  now what?  
+    finishAnimation: function() {
+      this.isAnimating = false;
+    },
+
     //----------------------------------------
     // move smoothly from one point to another
     // this is done asynchronously and ends when "to" point is reached.
     animateTo: function( toPos ) {
+      this.isAnimating = true;
+
       var start = this.getScaledPos( this.pos );
       var end   = this.getScaledPos( toPos );
 
@@ -48,14 +59,18 @@ Daleks.Piece = (function()
         y: end.y - start.y
       };
 
-      var frameCount = 8;
       var self = this;
       var i = 1;
+
       var nextFrame = function() {
-        self.drawAt( { x: start.x + (interval.x/frameCount)*i, 
-                       y: start.y + (interval.y/frameCount)*i });
-        if (++i <= frameCount) {
+        self.drawAt( { x: start.x + (interval.x / self.frameCount)*i, 
+                       y: start.y + (interval.y / self.frameCount)*i });
+        if (++i <= self.frameCount) {
+          // globalIAmAnimatingStill = true;  TODO - how to block until done?
+          // or interrupt
           setTimeout( nextFrame, 50 );
+         } else {
+           self.finishAnimation();
          }
       };
       nextFrame.call();
@@ -84,12 +99,12 @@ Daleks.Piece = (function()
       if (this.pos.y > dest.pos.y) { to.y--; }
       if (this.pos.y < dest.pos.y) { to.y++; }
       
-      this.moveTo( to );
+      this.slideTo( to );
     },
 
     //----------------------------------------
     // update logical position, and animate a transition to there on screen
-    moveTo: function( newPos ) {
+    slideTo: function( newPos ) {
       // start animation first (perhaps set should be a after-callback?
       this.animateTo( newPos );
 

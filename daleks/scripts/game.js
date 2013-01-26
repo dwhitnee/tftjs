@@ -1,5 +1,6 @@
 Daleks.GameController = (function()
 {
+  "use strict";
   function GameController( canvas ) {
     var self = this;
     this.board = new Daleks.Board( 30, 20 );
@@ -27,7 +28,7 @@ Daleks.GameController = (function()
 
       this.enableKeyboardShortcuts();
 
-      this.doctor = new Daleks.Piece("doctor");
+      this.doctor = new Daleks.Piece("doctor", { frameCount: 4 });
 
       this.controls = new Daleks.DoctorControls( 
         this.board, 
@@ -64,7 +65,7 @@ Daleks.GameController = (function()
       for (i in this.rubble) {
         this.rubble[i].draw();
       }
-      this.doctor.draw();
+      // this.doctor.draw();  // animated elsewhere
       this.controls.draw();
 
       $("#level").text( this.level );
@@ -96,11 +97,50 @@ Daleks.GameController = (function()
       }
     },
 
+    // @return true of any daleks or the doctor are an in-progress animation
+    animationInProgress: function() {
+      for (var i in this.daleks) {
+        if (this.daleks[i].isAnimating) {
+          return true;
+        }
+      }
+
+      return this.doctor.isAnimating;
+    },
+
     //----------------------------------------
     // the doctor made a move, respond
     updateWorld: function() {
       
+      var self = this;
+      var tryAgain = function() {
+        self.updateWorld();
+      };
+      
+      // Wait until doctor has moved
+      if (this.animationInProgress()) {
+        setTimeout( tryAgain, 100 );
+        return;
+      }
+
       this.moveDaleks();
+      this.checkWorld();
+    },
+
+    checkWorld: function() {
+
+      // can this logic be centralized (checkConditionAndTryAgain() )
+      var self = this;
+      var tryAgain = function() {
+        self.checkWorld();
+      };
+      
+      // wait until animations done
+      if (this.animationInProgress()) {
+        setTimeout( tryAgain, 100 );
+        return;
+      }
+
       this.checkCollisions();  // TODO remove pieces after animation is complete
 
       if (!this.roundOver) {
@@ -119,6 +159,11 @@ Daleks.GameController = (function()
       
       if (victory) {
         this.winRound();
+      }
+      
+      // keep going until round over
+      if (!this.roundOver && this.isLastStand) {
+        this.updateWorld();
       }
     },
 
@@ -231,6 +276,9 @@ Daleks.GameController = (function()
       this.isLastStand = true;
       this.controls.disable();
 
+      this.updateWorld();
+/*
+  
       var self = this;
       var nextStepFn = function() {      
         self.updateWorld();
@@ -240,6 +288,7 @@ Daleks.GameController = (function()
       };
 
       nextStepFn.call();
+*/
     },
 
     //----------------------------------------
