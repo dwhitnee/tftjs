@@ -108,6 +108,12 @@ a.button.disabled {
   -ms-user-select:     none;
 }
 
+.button[data-name=abort] {
+    display: none;
+}
+
+
+
 .gameover {
     position: absolute;
     z-index: 2;

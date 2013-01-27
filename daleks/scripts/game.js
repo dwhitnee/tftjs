@@ -9,6 +9,13 @@ Daleks.GameController = (function()
     canvas.append( this.board.getEl() );
 
     this.resetGame();
+
+    this.panicButton = $(".button[data-name=abort]");
+    this.panicButton.on("click", "a", function(e) {
+                          e.preventDefault();
+                          self.restoreControls();
+                          return false;
+                        });
   }
 
   GameController.prototype = {
@@ -19,16 +26,12 @@ Daleks.GameController = (function()
       this.level++;
       this.screwdriversLeft = 1;
       this.roundOver = false;
-      this.isLastStand = false;
       this.board.clear();
       this.isAnimating = false;
 
       $(".gameover").hide();
       $(".loading").hide();
       $("#highScore").text( this.gameData.getHighScore() );
-      $(".button").removeClass("disabled");
-
-      this.enableActions();
 
       this.doctor = new Daleks.Piece("doctor", { frameCount: 4 });
 
@@ -38,6 +41,8 @@ Daleks.GameController = (function()
           fn: this.handleMove, 
           scope: this 
         });
+
+      this.restoreControls();
 
       this.board.placeDoctor( this.doctor );
 
@@ -75,8 +80,11 @@ Daleks.GameController = (function()
       $("#score").text( this.score );
     },
 
-    enableActions: function() {
+    enableControls: function() {
+      this.disableControls();  // make sure no handler leaks
       var self = this;
+      $(".button").removeClass("disabled");
+
       $("body").on("keydown",
         function(e) { 
           switch (e.which) {
@@ -88,8 +96,8 @@ Daleks.GameController = (function()
 
       // data-name is the function to call on click
       $(".actions").on("click", "a", function(e) {
+                         e.preventDefault();
                          var fn = $(e.target).closest('a').data('name');
-                         console.log( fn );
                          if (self[fn]) {
                            self[fn].call( self );
                          }
@@ -283,7 +291,7 @@ Daleks.GameController = (function()
       // depends on being called with "this" as context
       var reappearDone = function() {
         this.doneAnimating();
-        this.enableActions();
+        this.enableControls();
         this.updateWorld();
       };
 
@@ -315,7 +323,17 @@ Daleks.GameController = (function()
       this.disableControls();
       $(".button").addClass("disabled");
 
+      this.panicButton.removeClass("disabled");
+      this.panicButton.show();
+
       this.updateWorld();
+    },
+
+    // oops!
+    restoreControls: function() {
+      this.isLastStand = false;
+      this.enableControls();
+      this.panicButton.hide();
     },
 
     useScrewDriver: function() {
@@ -368,6 +386,7 @@ Daleks.GameController = (function()
       var self = this;
       $("body").one("click", function() {
                       self.startNextLevel();
+                      return false;
                     });
     },
 
@@ -388,6 +407,7 @@ Daleks.GameController = (function()
       $("body").one("click", function() {
                       self.resetGame();
                       self.startNextLevel();  
+                      return false;
                    });
 
     },
