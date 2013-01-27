@@ -12,6 +12,11 @@
        style="visibility: hidden; width: 1px; height: 1px;"/>
 
   <h1>Daleks!</h1>
+
+  <h2 class="rotateMe">
+    Please rotate me sideways!
+  </h2>
+
   <div class="arena">
 
     <div class="loading"></div>
@@ -29,6 +34,11 @@
       <span class="small">Click to try again</span>
     </div>
   </div>
+  <div class="actions unselectable">
+    <a class="button" data-name="teleport">(T)eleport</a>
+    <a class="button" data-name="sonicScrewDriver">(S)onic Screwdriver</a>
+    <a class="button" data-name="lastStand">(L)ast Stand</a>
+  </div>
 
   <div class="gameData">
     <div class="score">
@@ -41,14 +51,9 @@
     <div id="highScores">
       High Score: <span id="highScore"></span>
     </div>
-    <div id="instructions">
-      S)onic Screw Driver<br/>
-      T)eleport<br/>
-      L)ast Stand<br/>
-    </div>
   </div>
 
-  <script src="http://code.jquery.com/jquery-1.8.0.min.js"></script>
+  <script src="build/jquery-1.8.0.min.js"></script>
 <!--
   <script src="build/scripts.min.js"></script>
 -->
@@ -59,7 +64,6 @@
   <script src="scripts/controls.js"></script>
   <script src="scripts/sonicPulse.js"></script>
   <script src="scripts/game.js"></script>
-
 
 </body>
 </html>

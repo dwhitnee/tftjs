@@ -24,8 +24,13 @@ X Don't teleport into rubble? (and why not?)
 X Remove daleks *after* animation?
 X Lock controls until animation done?
 X disable teleport during last stand
+X multiple teleport bug
+X Install on web
+X  dwhitnee S3 bucket?
 
-multiple teleport bug
+http://dwhitnee.s3-website-us-east-1.amazonaws.com/
+
+Build and deploy for s3  (cp assets to build/
 
 http://fff.cmiscm.com/#!/main
 
@@ -38,14 +43,14 @@ Dalek destruction animation
 Named high score (central server? IAM to S3 or Dynamo?)
   - version this
 
-
 Tests
 
-Install on web
-  dwhitnee S3 bucket?
-
-Phone support
 Phone Gap app
+Phone (web) support
+  * bigger touch targets (16->32)
+  * buttons for last stand, teleport, screwdriver
+  * tap to start next round
+  * landscape mode
 
 Sound
   screw driver
@@ -55,4 +60,5 @@ Ads
 Tweet/Facebook icon
 
 
+Nope:
 Toggle grid?

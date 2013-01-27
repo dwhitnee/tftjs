@@ -26,8 +26,9 @@ Daleks.GameController = (function()
       $(".gameover").hide();
       $(".loading").hide();
       $("#highScore").text( this.gameData.getHighScore() );
+      $(".button").removeClass("disabled");
 
-      this.enableKeyboardShortcuts();
+      this.enableActions();
 
       this.doctor = new Daleks.Piece("doctor", { frameCount: 4 });
 
@@ -74,7 +75,7 @@ Daleks.GameController = (function()
       $("#score").text( this.score );
     },
 
-    enableKeyboardShortcuts: function() {
+    enableActions: function() {
       var self = this;
       $("body").on("keydown",
         function(e) { 
@@ -84,9 +85,21 @@ Daleks.GameController = (function()
             case 84: self.teleport(); break;
           }
         });
+
+      // data-name is the function to call on click
+      $(".actions").on("click", "a", function(e) {
+                         var fn = $(e.target).closest('a').data('name');
+                         console.log( fn );
+                         if (self[fn]) {
+                           self[fn].call( self );
+                         }
+                         return false;
+                      });
     },
-    disableKeyboardShortcuts: function() {
+    disableControls: function() {
+      this.controls.disable();
       $("body").off("keydown");
+      $(".actions").off("click", "a");
     },
 
     //----------------------------------------
@@ -238,8 +251,7 @@ Daleks.GameController = (function()
     teleport: function() {
       this.isAnimating = true;
 
-      this.controls.disable();
-      this.disableKeyboardShortcuts();
+      this.disableControls();
 
       var epicenter = this.doctor.getScaledCenterPos();
 
@@ -271,7 +283,7 @@ Daleks.GameController = (function()
       // depends on being called with "this" as context
       var reappearDone = function() {
         this.doneAnimating();
-        this.enableKeyboardShortcuts();
+        this.enableActions();
         this.updateWorld();
       };
 
@@ -300,9 +312,16 @@ Daleks.GameController = (function()
     lastStand: function() {
       this.isLastStand = true;
       this.controls.disable();
-      this.disableKeyboardShortcuts();
+      this.disableControls();
+      $(".button").addClass("disabled");
 
       this.updateWorld();
+    },
+
+    useScrewDriver: function() {
+      if (--this.screwdriversLeft <= 0) {
+        $(".button[data-name=sonicScrewDriver]").addClass("disabled");
+      }
     },
 
     //----------------------------------------
@@ -313,7 +332,8 @@ Daleks.GameController = (function()
         return;
       }
 
-      this.screwdriversLeft--;
+      this.useScrewDriver();
+
       var x = this.doctor.pos.x;
       var y = this.doctor.pos.y;
 
@@ -375,8 +395,7 @@ Daleks.GameController = (function()
     //----------------------------------------
     endRound: function() {
       this.roundOver = true;
-      this.controls.disable();
-      this.disableKeyboardShortcuts();
+      this.disableControls();
     },
     
     resetGame: function() {
