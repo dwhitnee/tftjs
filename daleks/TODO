@@ -21,9 +21,11 @@ X disable arrows after a move (and before updateWorld)
 X Block updateWorld on animation.
 X Draw rubble *after* animation
 X Don't teleport into rubble? (and why not?)
+X Remove daleks *after* animation?
+X Lock controls until animation done?
+X disable teleport during last stand
 
-
-disable teleport during last stand
+multiple teleport bug
 
 http://fff.cmiscm.com/#!/main
 
@@ -31,12 +33,11 @@ Star Wars intro
 Credits  http://nonanone.com/Daleks/img/scrn_OS85_1234.png
 
 Die better (one animation)
+Dalek destruction animation
 
 Named high score (central server? IAM to S3 or Dynamo?)
   - version this
 
-Remove daleks *after* animation?
-Lock controls until animation done?
 
 Tests
 

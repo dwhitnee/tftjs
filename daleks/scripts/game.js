@@ -21,6 +21,7 @@ Daleks.GameController = (function()
       this.roundOver = false;
       this.isLastStand = false;
       this.board.clear();
+      this.isAnimating = false;
 
       $(".gameover").hide();
       $(".loading").hide();
@@ -46,7 +47,6 @@ Daleks.GameController = (function()
         this.board.placeDalek( this.daleks[i], this.doctor );
       }
 
-      this.updateControls();
       this.draw();
     },
 
@@ -57,16 +57,18 @@ Daleks.GameController = (function()
     },
 
     // Update the css for all elements
-    // TODO: animate motion
     draw: function() {
-      for (var i in this.daleks) {
-        // this.daleks[i].draw();
-      }
-      for (i in this.rubble) {
+      // for (var i in this.daleks) {
+      //   this.daleks[i].draw();
+      // }
+
+      // this.doctor.draw();  // animated elsewhere
+
+      for (var i in this.rubble) {
         this.rubble[i].draw();
       }
-      // this.doctor.draw();  // animated elsewhere
-      this.controls.draw();
+
+      this.updateControls();   // draws controls as well
 
       $("#level").text( this.level );
       $("#score").text( this.score );
@@ -105,7 +107,7 @@ Daleks.GameController = (function()
         }
       }
 
-      return this.doctor.isAnimating;
+      return this.doctor.isAnimating || this.isAnimating;
     },
 
     //----------------------------------------
@@ -144,7 +146,6 @@ Daleks.GameController = (function()
       this.checkCollisions();  // TODO remove pieces after animation is complete
 
       if (!this.roundOver) {
-        this.updateControls();
         this.draw();
       }
       
@@ -231,64 +232,77 @@ Daleks.GameController = (function()
       $("#score").text( this.score );
     },
 
+
     //----------------------------------------
     // randomly jump doctor, no guarantee of landing place
     teleport: function() {
+      this.isAnimating = true;
+
+      this.controls.disable();
+      this.disableKeyboardShortcuts();
+
       var epicenter = this.doctor.getScaledCenterPos();
 
       this.board.remove( this.doctor );
-      this.controls.disable();
 
       var disappear = new Daleks.Animation.SonicPulse( 
         {
           container: this.board.getEl(), 
           epicenter: epicenter,
           innerDiameter: 48, 
-          outerDiameter: 480 
+          outerDiameter: 480,
+          callback: {
+            success: this.teleportReappear,
+            context: this
+          }
         });
+
       disappear.start();
-
-      // reppear after disappear is done
-      var self = this;
-      var reappearFn = function() {
-        self.board.placeDoctor( self.doctor );
-        self.updateWorld();
-
-        epicenter = self.doctor.getScaledCenterPos();
-
-        var reappearAnimation = new Daleks.Animation.SonicPulse( 
-          {
-            container: self.board.getEl(), 
-            epicenter: epicenter,
-            innerDiameter: 48,
-            outerDiameter: 480,
-            reverse: true
-          });
-        reappearAnimation.start();
-      };
-      setTimeout( reappearFn, 600 );
-
     },
 
+    //----------------------------------------
+    // reppear after disappear is done
+    teleportReappear: function() {
+
+      // someplace brand new!
+      this.board.placeDoctor( this.doctor );
+      var epicenter = this.doctor.getScaledCenterPos();
+
+      // depends on being called with "this" as context
+      var reappearDone = function() {
+        this.doneAnimating();
+        this.enableKeyboardShortcuts();
+        this.updateWorld();
+      };
+
+      var reappear = new Daleks.Animation.SonicPulse( 
+        {
+          container: this.board.getEl(), 
+          epicenter: epicenter,
+          innerDiameter: 48,
+          outerDiameter: 480,
+          reverse: true,
+          callback: {
+            success: reappearDone,
+            context: this
+          }
+        });
+
+      reappear.start();
+    },
+
+    doneAnimating: function() {
+      this.isAnimating = false;
+    },
+    
     //----------------------------------------
     // move Daleks inexorably towards the Doctor
     lastStand: function() {
       this.isLastStand = true;
       this.controls.disable();
+      this.disableKeyboardShortcuts();
 
       this.updateWorld();
-/*
-  
-      var self = this;
-      var nextStepFn = function() {      
-        self.updateWorld();
-        if (!self.roundOver) {
-          setTimeout( nextStepFn, 400 );
-        }
-      };
-
-      nextStepFn.call();
-*/
     },
 
     //----------------------------------------

@@ -1,7 +1,19 @@
 Daleks.Animation = Daleks.Animation || {};
 
 //----------------------------------------------------------------------
-// A Piece occupies a space on the board that no one else can occupy.
+// SonicPulse is an animation either outward or inward of concentric cirlces
+// called with this data:
+/*
+{
+  container: parent HTML element 
+  epicenter: { x, y } center of pulse relative to parent
+  innerDiameter: in px cirlce to start at
+  outerDiameter: in px to expand to
+  reverse: boolean true to collapse, false to expand
+  callback:  function to call when animation is done
+      { success: function, context: "this" for successFn }
+}
+*/
 //----------------------------------------------------------------------
 Daleks.Animation.SonicPulse = (function()
 {
@@ -9,8 +21,10 @@ Daleks.Animation.SonicPulse = (function()
 
   function SonicPulse( args ) {
 
+    args = args || {};
     this.container = args.container;
     this.reverse = args.reverse;  // whether to expand or collapse
+    this.callback = args.callback || {};  // what to do on completion
     this.pos = {};
     this.setPosition( args.epicenter );
     this.innerDiameter = args.innerDiameter || 16;
@@ -127,6 +141,9 @@ Daleks.Animation.SonicPulse = (function()
 
     end: function() {
       this.el.remove();
+      if (this.callback.success) {
+        this.callback.success.call( this.callback.context, this.callback.args );
+      }
     },
 
     _doSomethingQuasiPrivate: function() {
