@@ -9,6 +9,19 @@ body {
     .actions { display: none; }
 }
 
+ /* double everything, is there an easier way? */
+@media
+only screen and (-webkit-min-device-pixel-ratio : 1.5),
+only screen and (min-device-pixel-ratio : 1.5) {
+    .board .piece {
+        height: 32px;
+        width: 32px;
+    }
+    .actions a.button {
+        font-size: 20pt;
+    }
+}
+
 h1 {
     font-size: 1.5em;
     margin: 0;
@@ -159,6 +172,7 @@ a.button.disabled {
 
 .piece {
     position: absolute;
+    background-size: 100%;  /* scale to h/w */
     height: 16px;
     width: 16px;
 }

@@ -29,6 +29,10 @@ X Install on web
 X  dwhitnee S3 bucket?
 X Last stand abort
 
+Click to start next round needs to be <a> tag for mobile?
+Fix high score to register after all moves done. (short changed on
+last move)
+
 http://dwhitnee.s3-website-us-east-1.amazonaws.com/
 
 Build and deploy for s3  (cp assets to build/
@@ -47,11 +51,15 @@ Named high score (central server? IAM to S3 or Dynamo?)
 Tests
 
 Phone Gap app
+
 Phone (web) support
   * bigger touch targets (16->32)
-  * buttons for last stand, teleport, screwdriver
-  * tap to start next round
-  * landscape mode
+  * tap to start next round (vclick vs click?  need JqueryMobile?)
+  * tapone and click are not consistent (("body".one("tapone")
+  works...)
+  * scale motion in addition to css
+  *X buttons for last stand, teleport, screwdriver
+  *X? landscape mode
 
 Sound
   screw driver

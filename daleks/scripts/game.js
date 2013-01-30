@@ -1,8 +1,13 @@
 Daleks.GameController = (function()
 {
   "use strict";
+  
+  var _click = "click";
+  // var _click = "tapone";
+
   function GameController( canvas ) {
     var self = this;
+
     this.board = new Daleks.Board( 30, 20 );
     this.gameData = new Daleks.GameData();
 
@@ -10,8 +15,9 @@ Daleks.GameController = (function()
 
     this.resetGame();
 
+    // this is always enabled
     this.panicButton = $(".button[data-name=abort]");
-    this.panicButton.on("click", "a", function(e) {
+    this.panicButton.on( _click, function(e) {
                           e.preventDefault();
                           self.restoreControls();
                           return false;
@@ -80,6 +86,8 @@ Daleks.GameController = (function()
       $("#score").text( this.score );
     },
 
+    //----------------------------------------
+    // enable buttons and keyboard event handlers
     enableControls: function() {
       this.disableControls();  // make sure no handler leaks
       var self = this;
@@ -95,7 +103,7 @@ Daleks.GameController = (function()
         });
 
       // data-name is the function to call on click
-      $(".actions").on("click", "a", function(e) {
+      $(".actions").on( _click, "a", function(e) {
                          e.preventDefault();
                          var fn = $(e.target).closest('a').data('name');
                          if (self[fn]) {
@@ -103,11 +111,14 @@ Daleks.GameController = (function()
                          }
                          return false;
                       });
+
+      this.updateScrewDriver();
     },
+
     disableControls: function() {
       this.controls.disable();
       $("body").off("keydown");
-      $(".actions").off("click", "a");
+      $(".actions").off( _click, "a");
     },
 
     //----------------------------------------
@@ -202,7 +213,7 @@ Daleks.GameController = (function()
     dalekCollidedWithLandscape: function( inDalek ) { 
 
       if ( inDalek.collidedWith( this.doctor )) {
-        this.endGame();
+        this.loseGame();
         return false;
       }
 
@@ -329,15 +340,16 @@ Daleks.GameController = (function()
       this.updateWorld();
     },
 
-    // oops!
+    // oops! User didn't mean to last stand, cancel it.
     restoreControls: function() {
       this.isLastStand = false;
       this.enableControls();
       this.panicButton.hide();
     },
 
-    useScrewDriver: function() {
-      if (--this.screwdriversLeft <= 0) {
+    // hide screw driver button if used
+    updateScrewDriver: function() {
+      if (this.screwdriversLeft <= 0) {
         $(".button[data-name=sonicScrewDriver]").addClass("disabled");
       }
     },
@@ -350,7 +362,8 @@ Daleks.GameController = (function()
         return;
       }
 
-      this.useScrewDriver();
+      this.screwdriversLeft--;
+      this.updateScrewDriver();
 
       var x = this.doctor.pos.x;
       var y = this.doctor.pos.y;
@@ -384,14 +397,14 @@ Daleks.GameController = (function()
       $(".victory").show();
       
       var self = this;
-      $("body").one("click", function() {
+      $("body").one( _click, function() {
                       self.startNextLevel();
                       return false;
                     });
     },
 
     //----------------------------------------
-    endGame: function() {
+    loseGame: function() {
       this.endRound();
 
       // TODO animate
@@ -404,7 +417,7 @@ Daleks.GameController = (function()
       $("#highScores").show();
 
       var self = this;
-      $("body").one("click", function() {
+      $("body").one( _click, function() {
                       self.resetGame();
                       self.startNextLevel();  
                       return false;
@@ -416,6 +429,10 @@ Daleks.GameController = (function()
     endRound: function() {
       this.roundOver = true;
       this.disableControls();
+
+      // do this separately to prevent panic button form getting
+      // disabled on every animation.
+      this.panicButton.hide();   
     },
     
     resetGame: function() {
@@ -427,12 +444,11 @@ Daleks.GameController = (function()
   return GameController;
 })();
 
-var game = new Daleks.GameController( $(".arena") );
-game.startNextLevel();
 
 
 $(document).ready( function() 
 {
-  // setInterval( function() { animation.animate() }, 50 );
+  var game = new Daleks.GameController( $(".arena") );
+  game.startNextLevel();
 });
 

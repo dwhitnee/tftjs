@@ -12,8 +12,8 @@ buildDir = "build/"
 closure    = "/Users/dwhitney/Sites/build/compiler-latest/compiler.jar"
 externsDir = "/Users/dwhitney/Sites/build/"
 
+#  --compilation_level=ADVANCED_OPTIMIZATIONS
 closure_args = %W{
-  --compilation_level=ADVANCED_OPTIMIZATIONS
   --warning_level=VERBOSE
   --language_in=ECMASCRIPT5_STRICT
   --externs #{externsDir}jquery-1.8.externs.js
