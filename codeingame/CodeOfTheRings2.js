@@ -2,12 +2,7 @@
  * CodeOfTheRings challenge on codingame.com
  * 
  * 2015, dwhitnee@gmail.com
- * 
- * chars: 6097 (569/1450)
- * 6173 with 5 most common prefetched
- * 6001 with bugs fixed and 0 or 1 prefetched.
- * 
- */
+ **/
 
 String.prototype.repeat = function(n){
     return Array(n+1).join(this);
@@ -28,9 +23,6 @@ var LETTER = {
 };
 var ENTER = ".";
 
-// var LETTERS_BY_FREQUENCY = " ETAOINGSR";
-// var LETTERS_BY_FREQUENCY = "ETAOINGSR";
-var LETTERS_BY_FREQUENCY;
 
 //----------------------------------------------------------------------
 // Object that contains all Runes and the algorithms to determine the best rune to update
@@ -41,46 +33,25 @@ var Runes = (function()
 {
   function Runes( num ) {
     this.currentRune = 0;
-    this.letters = Array(num+1).join(" ").split("");   // inital letters on runes;
-    this.fixedRunes = "";
+    this.letters = Array( num ).join(" ").split("");   // inital letters on runes;
   }
   
   Runes.prototype = {
-
-    initFixed: function( num ) { 
-      var outCmd = "";
-      this.fixedRunes = LETTERS_BY_FREQUENCY.substr(0, num );
-      debug("Fixed: " + this.fixedRunes);
-
-      for (var i = 0; i < num; i++) {
-        outCmd += this.changeLetterOnCurrentRune( LETTERS_BY_FREQUENCY[i] );
-        outCmd += MOVE.RIGHT;
-        this.currentRune++;
-      }
-      return outCmd;
-    },
 
     // should we move to another rune that is faster to update than the current one?
     changeToBestRune: function( newLetter ) {
       // iterate over runes to find best one to update
       var bestDistance = 100000;
-
-      // automatically choose our static letters (though changing a blank may be faster)
-      var bestRune = this.fixedRunes.indexOf( newLetter );
-
-      if (bestRune >= 0) {
-        bestDistance = this.getRuneDistance( this.currentRune, bestRune );
-      }
-
-      for (var i=this.fixedRunes.length; i < this.letters.length; i++) {
+      var bestRune = -1;
+      
+      for (var i=0; i < this.letters.length; i++) {
         // how far away is rune[i] and how many letters need to shift?
         var letterOnRune = this.letters[i];
         var info = this.getDistanceAndDirToLetter( newLetter, letterOnRune );
         var letterDistance = info.dist;
+        var runeDistance = Math.abs( this.currentRune - i );
         
-        var runeDistance = this.getRuneDistance( this.currentRune, i );
-        
-        debug( i + ", " + letterDistance + " + " + runeDistance );
+        // debug( letterDistance );
         
         if ((letterDistance + runeDistance) < bestDistance) {
           bestDistance = letterDistance + runeDistance;
@@ -88,21 +59,13 @@ var Runes = (function()
         }
       }
 
-      debug("Best Rune for " + newLetter + " is " + bestRune );
+      // debug("Best Rune is " + bestRune );
 
       var info = this.getCommandToMoveToRune( bestRune );
 
       this.currentRune = bestRune;
 
       return info.dir.repeat( info.dist );
-    },
-
-    getRuneDistance: function( a, b ) {
-      var dist = Math.abs( a - b );
-      if (dist > 15) {
-        dist = 30 - dist;
-      }
-      return dist;
     },
 
     // either move right or left, whichever is better of these 30 runes
@@ -192,9 +155,9 @@ var Runes = (function()
       // udpate rune state
       this.letters[this.currentRune] = newLetter;
 
-      debug( this.printRunes() );
+      printErr( this.printRunes() );
       
-      return info.dir.repeat( info.dist );
+      return info.dir.repeat( info.dist ) + ENTER;
     }
   };
 
@@ -207,51 +170,27 @@ var Runes = (function()
 //----------------------------------------
 function spell( runes, newLetter ) {
   var cmd = runes.changeToBestRune( newLetter );
-  cmd += runes.changeLetterOnCurrentRune( newLetter ) + ENTER;
+  cmd += runes.changeLetterOnCurrentRune( newLetter );
 
   return cmd;
 }
 
-function calculateFrequency( str ) {
-  var letters = {};
-  for (var i=0; i < str.length; i++) {
-    if (str[i] != " ")
-      letters[str[i]]++;
-  }
-
-  var keys = []; 
-  for (var key in letters) keys.push(key);
-  var sorted = keys.sort( function(a,b){ return letters[a] - letters[b]; });
-  return sorted.join("");
-}
 
 //----------------------------------------------------------------------
-//var magicPhrase = readline();
-//var magicPhrase = "MINAS";
-var magicPhrase = "THREE RINGS FOR THE ELVEN KINGS UNDER THE SKY SEVEN FOR THE DWARF LORDS IN THEIR HALLS OF STONE NINE FOR MORTAL MEN DOOMED TO DIE ONE FOR THE DARK LORD ON HIS DARK THRONE IN THE LAND OF MORDOR WHERE THE SHADOWS LIE";
-// 883
-// 871
- magicPhrase = "GUZ MUG ZOG GUMMOG ZUMGUM ZUM MOZMOZ MOG ZOGMOG GUZMUGGUM";
-
-var runes = new Runes( 30 );
-var cmd = "";
-
-// don't bother with frequency count unless there are enough unique letters
-LETTERS_BY_FREQUENCY = calculateFrequency( magicPhrase );
-debug( LETTERS_BY_FREQUENCY );
-cmd += runes.initFixed( Math.min( 0, LETTERS_BY_FREQUENCY.length )/2-1);
-
+var magicPhrase = "THREE RINGS FOR THE ELVEN KINGS UNDER THE SKY SEVEN FOR THE DWARF LORDS IN THEIR HALLS OF STONE NINE FOR MORTAL MEN DOOMED TO DIE ONE FOR THE DARK LORD ON HIS DARK THRONEIN THE LAND OF MORDOR WHERE THE SHADOWS LIE";
+// 865
 
 debug( magicPhrase );
 
-cmd += spell( runes, magicPhrase[0], " ");
+var runes = new Runes( 30 );
+
+var cmd = spell( runes, magicPhrase[0], " ");
 for (var i = 1; i < magicPhrase.length; i++) {
   cmd += spell( runes, magicPhrase[i], magicPhrase[i-1] );
 }
 
 printErr("Length of instructions: " + cmd.length );
 print( cmd );
-
 
 
 function print(msg) {
