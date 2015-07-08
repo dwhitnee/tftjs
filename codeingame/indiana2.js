@@ -247,6 +247,7 @@ while (true) {
   // otherwise rotate the next room to fit us.
 
   // damn, we have to look all the way forward and recurse back if the path fails
+  // if type 4/5 or 10/11, that represents a choosing point
 
   var newRoom = getRoom( x, y );
 
