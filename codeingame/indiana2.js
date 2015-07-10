@@ -8,6 +8,12 @@
 /**
  *  Array.includes polyfill
  */
+if (![].last) {
+  Array.prototype.last = function() {
+    return this[this.length-1];
+  };
+}
+
 if (![].includes) {
   Array.prototype.includes = function(searchElement /*, fromIndex*/ ) {
     'use strict';
@@ -45,6 +51,7 @@ var TOP = "TOP";
 var BOTTOM = "BOTTOM";
 var LEFT = "LEFT";
 var RIGHT = "RIGHT";
+var BACK_UP = "DAMMIT";
 
 // rotate a door on a room clockwise (right) or counterclockwise (left)
 function rotate( door, direction ) {
@@ -72,9 +79,11 @@ var Room = (function() {
    * @param type [0-13]
    * @param paths routes into and out of room (list of dir pairs)
    */
-  function Room( inType ) {
+  function Room( x, y, inType ) {
     this.type = inType;
     this.paths = [];
+    this.x = x;
+    this.y = y;
 
     if (inType < 0) {
       this.notRotatable = true;
@@ -83,19 +92,40 @@ var Room = (function() {
   }
 
   Room.prototype = {
+    isDecisionPoint: function() {
+      return (this.type === 4) || (this.type === 5) ||
+        (this.type === 10) || (this.type === 11);
+    },
+
+    // cache indy's state when in this room for later recovery if we
+    // change our mind about the next room
+    setIndy: function( indy ) {
+      this.indy = JSON.parse( JSON.stringify( indy ));
+    },
+    getIndy: function() {
+      return JSON.parse( JSON.stringify( this.indy ));
+    },
+
+    unrotate: function() {
+      this.type = this.oldType || this.type;
+      this.oldType = undefined;
+    },
+
     rotate: function( inRotation ) {
 
       if (this.notRotatable) {
         return;
       }
 
+      this.oldType = this.type;
+
       switch (this.type) {
         case  0: break;
         case  1: break;
         case  2: this.type = 3; break;
         case  3: this.type = 2; break;
-        case  4: this.type = 4; break;
-        case  5: this.type = 5; break;
+        case  4: this.type = 5; break;
+        case  5: this.type = 4; break;
         case  6: this.type = (inRotation===LEFT)? 9:7; break;
         case  7: this.type = (inRotation===LEFT)? 6:8; break;
         case  8: this.type = (inRotation===LEFT)? 7:9; break;
@@ -159,19 +189,95 @@ var Room = (function() {
 
 
 // transform room array to more understandable cartesian way
-function getRoom( x, y ) {
-  return rooms[y][x];
+function getRoom( indy ) {
+  return rooms[indy.y][indy.x];
 }
 
 function printRooms() {
   for (var y=0; y < H; y++) {
     var str = "";
     for (var x=0; x < W; x++ ) {
-      str += getRoom( x, y ).type + " ";
+      str += getRoom( { x:x, y:y} ).type + " ";
     }
     printErr( str );
   }
 }
+
+
+// damn, we have to look all the way forward and recurse back if the path fails
+// if type 4/5 or 10/11, that represents a choosing point
+
+// @param tryOtherWay if true then always rotate RIGHT
+function moveThroughMaze( indy, tryOtherWay ) {
+  var command;
+
+  var room = getRoom( indy );
+  room.setIndy( indy );
+
+  var exitDir = room.getExitForEntrance( indy.enteringFrom );
+
+  printRooms();
+  printErr("in: " + indy.enteringFrom + " out: " + exitDir );
+
+  if ((exitDir === BOTTOM) && (indy.y  === rooms.length-1)) {
+    return undefined;  // done!
+  }
+
+  if (!exitDir) {
+    // fail!  back up to last decision point and try other path
+    return BACK_UP;
+  }
+
+  if (exitDir === LEFT) {
+    indy.x--;
+  } else if (exitDir === RIGHT) {
+    indy.x++;
+  } else if (exitDir === BOTTOM) {
+    indy.y++;
+  }
+
+
+  var newRoom = getRoom( indy );
+
+  var newEntranceDir = rotate( rotate( exitDir, LEFT ), LEFT);
+
+  if (tryOtherWay) {
+    newRoom.unrotate();
+    newRoom.rotate( RIGHT );
+    command = indy.x + " " + indy.y + " " + RIGHT;
+
+  } else if (newRoom.hasEntranceFrom( exitDir )) {
+    command = "WAIT";
+
+  } else {
+    // rotate such that new exit is not UP and entrance is avaliable
+    newRoom.rotate( LEFT );
+
+    var nextExit = newRoom.getExitForEntrance( newEntranceDir );
+    if (!nextExit) {
+      newRoom.rotate( LEFT );
+      newRoom.rotate( LEFT );  // three lefts make a right
+      command = indy.x + " " + indy.y + " " + RIGHT;
+    } else {
+      command = indy.x + " " + indy.y + " " + LEFT;
+    }
+  }
+
+  indy.enteringFrom =  newEntranceDir;
+
+  printErr("----");
+  printErr( command );
+  printErr( JSON.stringify( indy ));
+  printErr("----");
+
+  return {
+    command: command,
+    room: room,
+    isChangable: (newRoom.isDecisionPoint() && !tryOtherWay)
+  };
+}
+
+
 
 
 //----------------------------------------------------------------------
@@ -190,7 +296,7 @@ for (var i = 0; i < H; i++) {
 
   var roomRow = [];
   for (var r = 0; r < roomTypeList.length; r++) {
-    roomRow.push( new Room( roomTypeList[r] ));
+    roomRow.push( new Room( r, i, roomTypeList[r] ));
   }
   rooms.push( roomRow );
 }
@@ -203,69 +309,71 @@ var exitX = parseInt(readline());
 // game loop
 //----------------------------------------
 var layer = 0;
-var x, y;
 
-while (true) {
-  inputs = readline().split(' ');
-  var x0 = parseInt(inputs[0]);
-  var y0 = parseInt(inputs[1]);
-  var enteringFrom = inputs[2];
 
-  var numRocks = parseInt(readline());
-  for (i = 0; i < numRocks; i++) {
-    inputs = readline().split(' ');
-    var xR = parseInt(inputs[0]);
-    var yR = parseInt(inputs[1]);
-    var enteringFromRock = inputs[2];
-  }
+// initial pos
+inputs = readline().split(' ');
+var x = parseInt(inputs[0]);
+var y = parseInt(inputs[1]);
+var enteringFrom = inputs[2];
 
-  if (!x && !y) {
-    x = x0;
-    y = y0;
-  }
+var indy = {
+  x: x,
+  y: y,
+  enteringFrom: enteringFrom
+};
 
-  printRooms();
 
-  var room = getRoom( x, y );
+try {
+  var done = false;
+  var actions = [];
+  var tryOtherWay = false;
 
-  printErr("In (" + x0 + "," + y0 + ") which is a square of type " +
-           room.type + ": " + room.getPaths() );
+  while (!done) {
+    var action = moveThroughMaze( indy, tryOtherWay );
 
-  var exitDir = room.getExitForEntrance( enteringFrom );
+    if (!action) {
+      done = true;
 
-  printErr("in: " + enteringFrom + " out: " + exitDir );
+    } else if (action === BACK_UP) {
+      // rewind until last decision point we can change
 
-  if (exitDir === LEFT) {
-    x--;
-  } else if (exitDir === RIGHT) {
-    x++;
-  } else if (exitDir === BOTTOM) {
-    y++;
-  }
+      var oldAction;
+      while (!actions.last().isChangable) {
+        actions.pop().room.unrotate();
+        printErr("Backing up!");
+      }
+      oldAction = actions.pop();
+      indy = oldAction.room.getIndy();
 
-  // if nextRoom has an entrance then "WAIT" and let the app fall for us
-  // otherwise rotate the next room to fit us.
+      printErr("Backed up to " + JSON.stringify( indy ));
+      tryOtherWay = true;
 
-  // damn, we have to look all the way forward and recurse back if the path fails
-  // if type 4/5 or 10/11, that represents a choosing point
-
-  var newRoom = getRoom( x, y );
-
-  if (newRoom.hasEntranceFrom( exitDir )) {
-    print("WAIT");
-  } else {
-    // rotate such that new exit is not UP
-    newRoom.rotate( LEFT );
-    var newEntranceDir = rotate( rotate( exitDir, LEFT ), LEFT);
-
-    var nextExit = newRoom.getExitForEntrance( newEntranceDir );
-    if (!nextExit || nextExit === TOP) {
-      newRoom.rotate( LEFT );
-      newRoom.rotate( LEFT );  // three lefts make a right
-      print(x + " " + y + " " + RIGHT);
     } else {
-      print(x + " " + y + " " + LEFT);
+      actions.push( action );
+      tryOtherWay = false;
     }
-
   }
+
+  printErr("Done!");
+
+  while (true) {
+    print( actions.shift().command );
+
+    // inputs = readline().split(' ');
+    // var x0 = parseInt(inputs[0]);
+    // var y0 = parseInt(inputs[1]);
+    // var enteringFrom = inputs[2];
+
+    // var numRocks = parseInt(readline());
+    // for (i = 0; i < numRocks; i++) {
+    //   inputs = readline().split(' ');
+    //   var xR = parseInt(inputs[0]);
+    //   var yR = parseInt(inputs[1]);
+    //   var rockEnteringFrom = inputs[2];
+    // }
+  }
+}
+catch (err) {
+  printErr( err+ ": " + err.stack );
 }
