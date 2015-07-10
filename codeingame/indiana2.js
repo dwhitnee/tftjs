@@ -16,7 +16,6 @@ if (![].last) {
 
 if (![].includes) {
   Array.prototype.includes = function(searchElement /*, fromIndex*/ ) {
-    'use strict';
     var O = Object(this);
     var len = parseInt(O.length) || 0;
     if (len === 0) {
@@ -42,8 +41,7 @@ if (![].includes) {
     return false;
   };
 }
-
-
+//----------------------------------------------------------------------
 
 
 // absolute positions on a room
@@ -52,6 +50,14 @@ var BOTTOM = "BOTTOM";
 var LEFT = "LEFT";
 var RIGHT = "RIGHT";
 var BACK_UP = "DAMMIT";
+
+
+var doLog = true;
+function log( s ) {
+  if (doLog) {
+    printErr( s );
+  }
+}
 
 // rotate a door on a room clockwise (right) or counterclockwise (left)
 function rotate( door, direction ) {
@@ -94,7 +100,9 @@ var Room = (function() {
   Room.prototype = {
     isDecisionPoint: function() {
       return (this.type === 4) || (this.type === 5) ||
-        (this.type === 10) || (this.type === 11);
+        (this.type === 10) || (this.type === 11) || 
+        ((this.type >= 6) && (this.type <= 9));
+      // 6-9 are decisions between 6 and the others
     },
 
     // cache indy's state when in this room for later recovery if we
@@ -117,7 +125,7 @@ var Room = (function() {
         return;
       }
 
-      this.oldType = this.type;
+      this.oldType = this.oldType || this.type;
 
       switch (this.type) {
         case  0: break;
@@ -187,29 +195,40 @@ var Room = (function() {
   return Room;
 })();
 
-
 // transform room array to more understandable cartesian way
 function getRoom( indy ) {
   return rooms[indy.y][indy.x];
 }
-
+function pad(n) {
+  return n > 9 ? "" + n: "0" + n;
+}
 function printRooms() {
   for (var y=0; y < H; y++) {
     var str = "";
     for (var x=0; x < W; x++ ) {
-      str += getRoom( { x:x, y:y} ).type + " ";
+      str += pad( getRoom( { x:x, y:y} ).type ) + " ";
     }
-    printErr( str );
+    // log( str );
   }
 }
 
 
-// damn, we have to look all the way forward and recurse back if the path fails
+function invalidExit( exit, x ) {
+  var invalid = !exit;
+
+  if (!invalid) {
+    invalid = ((exit == TOP) || 
+               ((exit == RIGHT) && (x+1 === W)) ||
+               ((exit == LEFT) && (x === 0)));
+  }
+  return invalid;
+}
+
 // if type 4/5 or 10/11, that represents a choosing point
 
 // @param tryOtherWay if true then always rotate RIGHT
 function moveThroughMaze( indy, tryOtherWay ) {
-  var command;
+  var command, doDouble;
 
   var room = getRoom( indy );
   room.setIndy( indy );
@@ -217,7 +236,7 @@ function moveThroughMaze( indy, tryOtherWay ) {
   var exitDir = room.getExitForEntrance( indy.enteringFrom );
 
   printRooms();
-  printErr("in: " + indy.enteringFrom + " out: " + exitDir );
+  log("in: " + indy.enteringFrom + " out: " + exitDir );
 
   if ((exitDir === BOTTOM) && (indy.y  === rooms.length-1)) {
     return undefined;  // done!
@@ -236,27 +255,50 @@ function moveThroughMaze( indy, tryOtherWay ) {
     indy.y++;
   }
 
-
   var newRoom = getRoom( indy );
 
   var newEntranceDir = rotate( rotate( exitDir, LEFT ), LEFT);
 
   if (tryOtherWay) {
-    newRoom.unrotate();
-    newRoom.rotate( RIGHT );
-    command = indy.x + " " + indy.y + " " + RIGHT;
+    if (newRoom.type == 7) {     // rotate left
+      newRoom.rotate( LEFT );
+      command = indy.x + " " + indy.y + " " + LEFT;
+
+    } else if (newRoom.type == 9) {  // rotate right
+      newRoom.rotate( RIGHT );
+      command = indy.x + " " + indy.y + " " + RIGHT;
+
+    } else if (newRoom.type == 8) {  // double rotate LEFT to 6
+      newRoom.rotate( RIGHT );
+      newRoom.rotate( RIGHT );
+      command = indy.x + " " + indy.y + " " + RIGHT;
+      doDouble = true;
+
+    } else {
+      newRoom.unrotate();
+      newRoom.rotate( RIGHT );
+      command = indy.x + " " + indy.y + " " + RIGHT;
+    }
 
   } else if (newRoom.hasEntranceFrom( exitDir )) {
     command = "WAIT";
-
+    
   } else {
     // rotate such that new exit is not UP and entrance is avaliable
-    newRoom.rotate( LEFT );
+    newRoom.rotate( LEFT );  // try left first
 
     var nextExit = newRoom.getExitForEntrance( newEntranceDir );
-    if (!nextExit) {
-      newRoom.rotate( LEFT );
-      newRoom.rotate( LEFT );  // three lefts make a right
+
+    if (invalidExit( nextExit, indy.x )) {   // Then try right
+      newRoom.rotate( RIGHT );  // undo the left first
+      newRoom.rotate( RIGHT );
+
+      nextExit = newRoom.getExitForEntrance( newEntranceDir );
+      if (invalidExit( nextExit, indy.x )) {  // try reverse
+        // rotate right once more, but this is a double action (reverse really)
+        newRoom.rotate( RIGHT );
+        doDouble = true;
+      }
       command = indy.x + " " + indy.y + " " + RIGHT;
     } else {
       command = indy.x + " " + indy.y + " " + LEFT;
@@ -265,14 +307,16 @@ function moveThroughMaze( indy, tryOtherWay ) {
 
   indy.enteringFrom =  newEntranceDir;
 
-  printErr("----");
-  printErr( command );
-  printErr( JSON.stringify( indy ));
-  printErr("----");
+  log("----");
+  log( command );
+  log( JSON.stringify( indy ));
+  log("----");
 
   return {
     command: command,
     room: room,
+    nextRoom: newRoom,
+    doDouble: doDouble,  // if this is true, we need to do another RIGHT
     isChangable: (newRoom.isDecisionPoint() && !tryOtherWay)
   };
 }
@@ -304,6 +348,7 @@ for (var i = 0; i < H; i++) {
 // the coordinate along the X axis of the exit (not useful for this
 // first mission, but must be read).
 var exitX = parseInt(readline());
+log("EXIT: " + exitX );
 
 //----------------------------------------
 // game loop
@@ -331,34 +376,48 @@ try {
 
   while (!done) {
     var action = moveThroughMaze( indy, tryOtherWay );
-
-    if (!action) {
-      done = true;
-
-    } else if (action === BACK_UP) {
+    
+    if ((action === BACK_UP) || (!action && indy.x != exitX)) {
       // rewind until last decision point we can change
+      if (!action) {
+        log(indy.x + " is not the exit column :" + exitX );
+      }
 
       var oldAction;
       while (!actions.last().isChangable) {
-        actions.pop().room.unrotate();
-        printErr("Backing up!");
+        actions.pop().nextRoom.unrotate();
+        log("Backing up!");
       }
       oldAction = actions.pop();
       indy = oldAction.room.getIndy();
 
-      printErr("Backed up to " + JSON.stringify( indy ));
+      log("Backed up to " + JSON.stringify( indy ));
       tryOtherWay = true;
+      
+    } else if (!action) {
+      done = true;
 
     } else {
+      if (action.doDouble) {
+        // go back and change a "WAIT" to a "RIGHT"
+        for (var w=actions.length-1; w > 0; w--) {
+          if (actions[w].command == "WAIT") {
+            actions[w].command = action.command;
+            break;
+          }
+        }
+      }
       actions.push( action );
       tryOtherWay = false;
     }
   }
 
-  printErr("Done!");
+  log("Done!");
 
   while (true) {
-    print( actions.shift().command );
+    var action = actions.shift();
+    print( action.command );
+    printErr("Because " + JSON.stringify( action.room ));
 
     // inputs = readline().split(' ');
     // var x0 = parseInt(inputs[0]);

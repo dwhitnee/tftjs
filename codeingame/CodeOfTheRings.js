@@ -231,7 +231,7 @@ function calculateFrequency( str ) {
 var magicPhrase = "THREE RINGS FOR THE ELVEN KINGS UNDER THE SKY SEVEN FOR THE DWARF LORDS IN THEIR HALLS OF STONE NINE FOR MORTAL MEN DOOMED TO DIE ONE FOR THE DARK LORD ON HIS DARK THRONE IN THE LAND OF MORDOR WHERE THE SHADOWS LIE";
 // 883
 // 871
- magicPhrase = "GUZ MUG ZOG GUMMOG ZUMGUM ZUM MOZMOZ MOG ZOGMOG GUZMUGGUM";
+ magicPhrase = "ALROG BALROG BALROG BALROG BALROG BALROG BALROG BALROG BALROG BALROG BALROG BALROG BALROG BALROG BALROG BALROG BALROG BALROG BALROG BALROG BALROG BALROG BALROG BALROG BALROG BALROG B";
 
 var runes = new Runes( 30 );
 var cmd = "";
@@ -239,7 +239,7 @@ var cmd = "";
 // don't bother with frequency count unless there are enough unique letters
 LETTERS_BY_FREQUENCY = calculateFrequency( magicPhrase );
 debug( LETTERS_BY_FREQUENCY );
-cmd += runes.initFixed( Math.min( 0, LETTERS_BY_FREQUENCY.length )/2-1);
+cmd += runes.initFixed( Math.min( 4, LETTERS_BY_FREQUENCY.length )/2-1);
 
 
 debug( magicPhrase );
