@@ -119,7 +119,9 @@ var Room = (function() {
       this.type = this.oldType || this.type;
       this.oldType = undefined;
     },
-
+    canRotate: function() {
+      return !this.notRotatable;
+    },
     rotate: function( inRotation ) {
 
       if (this.notRotatable) {
@@ -227,48 +229,52 @@ function invalidExit( exit, x ) {
 }
 
 
-function interceptARock( rocks ) {
-  var rock;
-  for (var i=0; i< rocks.length; i++) {
-    if (!rocks[i].intercepted) {
-      rock = rocks[i];
-      break;
+function interceptARock( indy, rocks ) {
+  var rock, room, newRoom, exitDir;
+
+
+  for (var i=0; i < rocks.length; i++) {
+    rock = rocks[i];
+    room = getRoom( rock );
+    exitDir = room.getExitForEntrance( rock.enteringFrom );
+
+    if (exitDir === LEFT) {
+      rock.x--;
+    } else if (exitDir === RIGHT) {
+      rock.x++;
+    } else if (exitDir === BOTTOM) {
+      rock.y++;
     }
+    newRoom = getRoom( rock );
+
+    if ( ! ((indy.x == rock.x) && (indy.y == rock.y )) &&
+      newRoom.canRotate() && 
+         newRoom.hasEntranceFrom( exitDir )) {  // try to block
+             break;
+         }
+    rock = null;
   }
 
   if (!rock) {
     return WAIT;
   }
 
-  var room = getRoom( rock );
-  var exitDir = room.getExitForEntrance( rock.enteringFrom );
-
-  if (exitDir === LEFT) {
-    rock.x--;
-  } else if (exitDir === RIGHT) {
-    rock.x++;
-  } else if (exitDir === BOTTOM) {
-    rock.y++;
-  }
-
-  var newRoom = getRoom( rock );
+  printErr("Indy: " + indy.x + ", " + indy.y);
+  printErr("Rock: " + rock.x + ", " + rock.y);
 
   var command = WAIT;
-  if (newRoom.hasEntranceFrom( exitDir )) {  // try to block
-    if (newRoom.rotate( LEFT )) {
-      command = rock.x + " " + rock.y + " " + LEFT;
-      rock.intercepted = !newRoom.hasEntranceFrom( exitDir );
 
-      if (!rock.intercepted) {  // did it work?
-        newRoom.unrotate();
-        newRoom.rotate( RIGHT );
-        rock.intercepted = !newRoom.hasEntranceFrom( exitDir );
-        command = rock.x + " " + rock.y + " " + RIGHT;
-      }
+  if (newRoom.hasEntranceFrom( exitDir )) {  // try to block
+    newRoom.rotate( RIGHT );
+    command = rock.x + " " + rock.y + " " + RIGHT;
+      
+    if (!newRoom.hasEntranceFrom( exitDir )) {  // did it work?
+      newRoom.unrotate();
+      newRoom.rotate( LEFT );
+      command = rock.x + " " + rock.y + " " + LEFT;  // hope for the best
     }
-  } else {
-    rock.intercepted = true;
   }
+
   return command;
 }
 
@@ -474,18 +480,18 @@ try {
     var action = actions.shift();
 
     if (action.command === WAIT) {
-      print( interceptARock( rocks ));
+      print( interceptARock( indy, rocks ));
     } else {
       print( action.command );
     }
 
     inputs = readline().split(' ');
-    // var x0 = parseInt(inputs[0]);
-    // var y0 = parseInt(inputs[1]);
+    indy.x = parseInt(inputs[0]);
+    indy.y = parseInt(inputs[1]);
     // var enteringFrom = inputs[2];
 
     readRocks( rocks );
-    log( rocks.length + " rocks!");
+    printErr( rocks.length + " rocks!");
     printErr( JSON.stringify ( rocks ));
   }
 }
