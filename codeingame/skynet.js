@@ -3,6 +3,8 @@
  *
  * 2015, dwhitnee@gmail.com
  */
+/*global print, printErr, readline */
+
 
 var inputs = readline().split(' ');
 var numNodes = parseInt(inputs[0]); // the total number of nodes in the level, including the gateways
@@ -17,19 +19,18 @@ for (var i = 0; i < numNodes; i++) {
 
 for (i = 0; i < numLinks; i++) {
   inputs = readline().split(' ');
-  var N1 = parseInt(inputs[0]); // N1 and N2 defines a link between these nodes
-  var N2 = parseInt(inputs[1]);
-  printErr( N1 + " " + N2);
+  var n1 = parseInt(inputs[0]); // N1 and N2 defines a link between these nodes
+  var n2 = parseInt(inputs[1]);
+  printErr( n1 + " " + n2);
 
-  nodes[N1].links.push( N2 );
-  nodes[N2].links.push( N1 );
+  nodes[n1].links.push( n2 );
+  nodes[n2].links.push( n1 );
 }
 
-for (var i = 0; i < numExits; i++) {
-  var EI = parseInt(readline()); // the index of a gateway node
-  if (!nodes[EI]) nodes[EI] = {};
-  nodes[EI].isGateway = true;
-
+for (i = 0; i < numExits; i++) {
+  var id = parseInt(readline()); // the index of a gateway node
+  nodes[id] = nodes[id] || {};
+  nodes[id].isGateway = true;
 }
 
 function removeLink(a, b) {
@@ -39,17 +40,24 @@ function removeLink(a, b) {
   print(a+" "+b);
 }
 
-// game loop
-var done;
+
+
+var done = false;
+
 while (true) {
   printErr( JSON.stringify( nodes ));
-  var skynet = parseInt(readline()); // The index of the node on which the Skynet agent is positioned this turn
+
+  // The index of the node on which the Skynet agent is positioned this turn
+  var skynet = parseInt(readline());
+
   done = false;
   // First cut any link between skynet and an immediate exit
   var dangerousLinks = nodes[skynet].links;
   printErr("Near skynet: " + dangerousLinks);
-  for (var i = dangerousLinks.length-1; i; i--) {
+
+  for (i = dangerousLinks.length-1; i; i--) {
     var potentialExit = dangerousLinks[i];
+
     printErr("Checking link " + skynet + " to " + dangerousLinks[i]);
     if (nodes[potentialExit].isGateway) {
       done = true;
@@ -57,6 +65,7 @@ while (true) {
       break;
     }
   }
+
   // Second, cut all links to exits
   if (!done) {
     //removeLink( skynet, nodes[skynet].links[nodes[skynet].links.length-1] );
