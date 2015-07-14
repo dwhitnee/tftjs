@@ -20,6 +20,12 @@ var Room = (function() {
     isAnExit: function() {
       return this.id === "E";
     },
+    setCachedMoney: function( val ) {
+      this.cachedMoney = val;
+    },
+    getCachedMoney: function() {
+      return this.cachedMoney;
+    },
 
     // chalk the room
     visit: function() {
@@ -55,12 +61,12 @@ var Room = (function() {
   return Room;
 })();
 
-function traverseRooms( rooms, room, markAsTravelled ) {
+function traverseRooms2( rooms, room, markAsTravelled ) {
   var money1 = -1;
   var money2 = -1;
   var justPassingThrough = false;
 
-  printErr("Bender is in room: " + room.id );
+  log("Bender is in room: " + room.id );
 
   // exit condition, literally
   if (room.isAnExit() ) {
@@ -103,14 +109,44 @@ function traverseRooms( rooms, room, markAsTravelled ) {
   if (money1 > money2) {
     traverseRooms( rooms, room.exit1, { permanent: true });  // lock the rooms
     outMoney += money1;
-    printErr("Bender went to: " + room.exit1.id  + " with " + outMoney);
+    log("Bender went to: " + room.exit1.id  + " with " + outMoney);
 
   } else {
     traverseRooms( rooms, room.exit2, { permanent: true });  // lock the rooms
     outMoney += money2;
-    printErr("Bender went to: " + room.exit2.id  + " with " + outMoney);
+    log("Bender went to: " + room.exit2.id  + " with " + outMoney);
   }
 
+  return outMoney;
+}
+
+//----------------------------------------------------------------------
+function traverseRooms( rooms, room ) {
+  var money1 = -1;
+  var money2 = -1;
+  var outMoney = room.getCachedMoney();
+
+  log("Bender is in room: " + room.id );
+
+  // exit condition, literally
+  if (room.isAnExit() ) {
+    return 0;
+  }
+
+  if (!outMoney) {
+    money1 = traverseRooms( rooms, room.exit1, { tentative: true });
+    money2 = traverseRooms( rooms, room.exit2, { tentative: false });
+
+    outMoney = room.money;
+
+    if (money1 > money2) {
+      outMoney += money1;
+    } else {
+      outMoney += money2;
+    }
+  }
+
+  room.setCachedMoney( outMoney );
   return outMoney;
 }
 
@@ -143,5 +179,5 @@ function logRooms( rooms ) {
 }
 
 function log( str ) {
-  printErr( str );
+  // printErr( str );
 }
