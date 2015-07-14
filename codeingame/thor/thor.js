@@ -1,6 +1,8 @@
 /**
- *  Hint: You can use the debug stream to print TX and TY, if Thor does not follow your orders.
- **/
+ * Thor problem on codingame.com
+ *
+ * 2015, dwhitnee@gmail.com
+ */
 
 var inputs = readline().split(' ');
 var LX = parseInt(inputs[0]); // the X position of the light of power
