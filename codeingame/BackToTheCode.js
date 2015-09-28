@@ -4,7 +4,10 @@
  * 4: 1001 (250)
  * 3: 900  (300)
  * 2: 700  (350)
- */
+
+ * Rating: 35   (#288)
+ * Rating: 37.5 (#180)
+*/
 
 function debug( str ) {
   printErr( str );
@@ -121,11 +124,29 @@ var Board = (function()
       return true;
     },
 
+
+
+    findWidestRect: function( rect ) {
+      for (; rect.left >= 0 && this.isRectClear( rect ); rect.left--) {};          rect.left++;
+      for (; rect.right < this.width && this.isRectClear( rect ); rect.right++){}; rect.right--;
+      for (; rect.top >= 0 && this.isRectClear( rect ); rect.top--) {};            rect.top++;
+      for (; rect.bottom < this.height && this.isRectClear( rect ); rect.bottom++) {}; rect.bottom--;
+    },
+
+    findTallestRect: function( rect ) {
+      for (; rect.top >= 0 && this.isRectClear( rect ); rect.top--) {};            rect.top++;
+      for (; rect.bottom < this.height && this.isRectClear( rect ); rect.bottom++) {}; rect.bottom--;
+      for (; rect.left >= 0 && this.isRectClear( rect ); rect.left--) {};          rect.left++;
+      for (; rect.right < this.width && this.isRectClear( rect ); rect.right++){}; rect.right--;
+    },
+
     /**
      *  largest unoccupied rect that has (contains?) (x,y) as a corner
+     *  This isn't really largest, it is largest and widest.
+     * FIXME: This needs to take other shapes into account
      */
     findLargestRectangle: function( x, y) {
-      // start upper left?
+      var outRect;
 
       debug("Finding Largest rect ====");
 
@@ -134,30 +155,30 @@ var Board = (function()
         return null;
       }
 
-      var rect = new Rectangle( x,y, x,y );
+      var wideRect = new Rectangle( x,y, x,y );
+      var tallRect = new Rectangle( x,y, x,y );
 
       // find biggest rect by expanding as far as possible in each direction
-      // this works unless
 
-      for (; rect.left >= 0 && this.isRectClear( rect ); rect.left--) {};
-      rect.left++;
+      this.findWidestRect( wideRect );
+      this.findTallestRect( tallRect );
 
-      for (; rect.right < this.width && this.isRectClear( rect ); rect.right++) {};
-      rect.right--;
-
-      for (; rect.top >= 0 && this.isRectClear( rect ); rect.top--) {};
-      rect.top++;
-
-      for (; rect.bottom < this.height && this.isRectClear( rect ); rect.bottom++) {};
-      rect.bottom--;
-
-      // we own this rect already, don't bother
-      if (this.isRectOwned( rect )) {
-        return null;
+      // if we own these rects already, don't bother
+      if (this.isRectOwned( wideRect )) {
+        wideRect = null;
+      }
+      if (this.isRectOwned( tallRect )) {
+        tallRect = null;
       }
 
-      debug("Largest rect is " + rect.toString() );
-      return rect;
+      outRect = wideRect;
+      if (tallRect && tallRect.biggerThan( wideRect )) {
+        outRect = tallRect;
+      }
+
+      debug("Largest rect is " +
+            (outRect ? outRect.toString() : " nothin") );
+      return outRect;
     },
 
     /**
@@ -271,6 +292,18 @@ var Rectangle = (function()
       return ((x >= this.left) && (x <= this.right) &&
               (y >= this.top) && (y <= this.bottom));
     },
+
+    area: function() {
+      return (1 + this.right - this.left) * (1 + this.bottom - this.top);
+    },
+
+    biggerThan: function( rect ) {
+      if (!rect) {
+        return true;
+      }
+      return this.area() > rect.area();
+    },
+
     toString: function() {
       return "[" + this.left + "," + this.top + "], [" + this.right + "," +this.bottom + "]";
     }
