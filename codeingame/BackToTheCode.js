@@ -6,8 +6,8 @@
  * 2: 700  (350)
 
  * Rating: 35   (#288)
- * Rating: 37.5 (#180)
-*/
+ * Rating: 38 (#170)  check wide and high, no defense or BTFs
+ */
 
 function debug( str ) {
   printErr( str );
@@ -101,7 +101,7 @@ var Board = (function()
       var startX = rect.left;
       for (var x=rect.left; x <= rect.right; x++) {
         for (var y=rect.top; y <= rect.bottom; y++) {
-          if (this.get(x,y)) {
+          if (this.get(x,y) > 0) {
             return false;
           }
         }
