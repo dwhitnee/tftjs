@@ -5,8 +5,19 @@
  * 3: 900  (300)
  * 2: 700  (350)
 
- * Rating: 35   (#288)
- * Rating: 38 (#170)  check wide and high, no defense or BTFs
+ * Rating: 35  (#288)
+ * Rating: 38  (#170)  check wide and high, no defense or BTFs
+ * Rating: 39  (#154-163)  bug fix to ignore our own squares when calculating largest rect
+ *   still a bug when stuck on same square with another player
+ *   I also don't ignore real estate I already have when calculating largest rect, should be
+ *   largestPotentialGainRect
+ *   Could add rect short circuit if someone is approaching boundary.  Hard to get right.
+ * ALgorithm gets inerrupted a lot, should fail onto smaller rect more gracefully
+
+ * Rating: 38 (#173)  Fixed bug - ignore other player who enters rect but does not take any squares
+ * Rating: 36 (#242)  Add diagonal stroke to start.
+ * Rating: 37 (#226)  Fix overlap with other player bug (no one gets the square?)
+ * Rating: ?36.5 (#214)   Lose the diagonal
  */
 
 function debug( str ) {
@@ -60,7 +71,7 @@ var Board = (function()
           player = player|0;  // toInt
         }
 
-        if (!this.squares[x][y] || forceSet) {
+        if ((this.squares[x][y] === undefined) || forceSet) {
           this.squares[x][y] = player;
         }
       }
@@ -85,6 +96,11 @@ var Board = (function()
      * Find a random empty square (get nearest empty square?  FIXME)
      */
     getRandomSquare: function() {
+
+      if (this.isFull()) {
+        return {x:0,y:0};
+      }
+
       var x,y;
       for (;x === undefined || this.get(x, y) !== undefined; ) {
         x = Math.floor( Math.random() * board.width );
@@ -124,6 +140,16 @@ var Board = (function()
       return true;
     },
 
+    isFull: function() {
+      for (var y = 0; y < this.height; y++) {
+        for (var x = 0; x < this.width; x++) {
+          if (this.get(x,y) === undefined) {
+            return false;
+          }
+        }
+      }
+      return true;
+    },
 
 
     findWidestRect: function( rect ) {
@@ -320,20 +346,36 @@ var opponentCount = parseInt(readline()); // Opponent count
 
 var taunt = "eat my bubbles";
 
-var dest = { x:0, y:0};  // where we are going
-var currentRect;  // the rectangle we're trying to surround
-var wandering = false;
 var board =  new Board( 35, 20 );   // board is always 35x20
+
+var dest = { x:0, y:0};   // where we are going
+var last = {x:100,y:100}; // last place we went
+var currentRect;          // the rectangle we're trying to surround
+var wandering = false;
+var turn = 0;
+
+var starting = true;
+var drawingDiagonal = false;
+var diagVec = { x:1, y:1 };
+
+var bitsLeft = [1,1,1,1,1,1,1];   // Back In Times left
 
 // game loop
 try {
 while (true) {
+  turn++;
 
   var gameRound = parseInt(readline());
   var inputs = readline().split(' ');
   var x = parseInt( inputs[0] ); // Our x position
   var y = parseInt( inputs[1] ); // Our y position
   var backInTimeLeft = parseInt( inputs[2] ); // Remaining "back in time"
+
+  // we didn't move, nudge!
+  if ((x === last.x) && (y === last.y)) {
+    currentRect = null;
+  }
+  last = {x:x, y:y};
 
   board.set( x, y, 0 );
 
@@ -345,6 +387,14 @@ while (true) {
     var oppX = parseInt( inputs[0]|0 ); // X position of the opponent
     var oppY = parseInt( inputs[1]|0 ); // Y position of the opponent
     var oppBITLeft = parseInt( inputs[2]|0 ); // back in time of the opponent
+
+    if (bitsLeft[i] != oppBITLeft) {   // someone went back in time!  panic!
+      bitsLeft[i] = oppBITLeft;
+      taunt = "Sneaky!";
+      currentRect = null;  // recalc best move post time warp
+    } else {
+      taunt = "eat my bubbles";
+    }
 
     // negative if they quit
     if (oppX >= 0) {
@@ -365,7 +415,7 @@ while (true) {
   // read board even though we don't care
   // Read lines of the map   '.' = free, else id of player (we are "0")
   var lines = [];
-  for (var i = 0; i < 20; i++) {
+  for (i = 0; i < 20; i++) {
     lines.push( readline() );
   }
   board.update( lines );
@@ -375,6 +425,38 @@ while (true) {
 
   //  printErr( JSON.stringify( board.score() ));
   // if losing with a few moves left, go back to the future?
+
+  // Start aggressive with a large diagonal to mess up others
+  if (starting) {
+    starting = false;
+    dest = {x:x, y:y};
+
+    // make longest diagonal
+    if (2*x > board.width) {
+      diagVec.x = -1;
+    }
+    if (2*y > board.height) {
+      diagVec.y = -1;
+    }
+  }
+
+  // move diagonally until we hit an edge
+  if (drawingDiagonal) {
+    if ((dest.x === 0) || (dest.x === 34) ||
+        (dest.y === 0) || (dest.y === 19))
+    {
+      drawingDiagonal = false;
+
+    } else {
+      if (turn % 2) {
+        dest.x += diagVec.x;
+      } else {
+        dest.y += diagVec.y;
+      }
+      print( dest.x + " " + dest.y + " " + taunt);
+      continue;
+    }
+  }
 
   if (!currentRect) {
     currentRect = board.findLargestRectangle( x, y );
