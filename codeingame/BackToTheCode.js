@@ -17,7 +17,7 @@
  * Rating: 38 (#173)  Fixed bug - ignore other player who enters rect but does not take any squares
  * Rating: 36 (#242)  Add diagonal stroke to start.
  * Rating: 37 (#226)  Fix overlap with other player bug (no one gets the square?)
- * Rating: ?36.5 (#214)   Lose the diagonal
+ * Rating: 37 (#165)   Lose the diagonal
  */
 
 function debug( str ) {
