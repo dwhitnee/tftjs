@@ -17,12 +17,173 @@
  * 400 units away, the human is killed and the zombie moves onto their coordinate
  *
  * Strategy:
- * * save nearest human: 100%, 30,000
- * * save nearest human first, then go after zombies: 47,430
- *
+ * o save nearest savable human: 100%, 30,000
+ * o save nearest human first, then go after zombies: 47,430
+ * o save nearest human, then find center of zombie mass, unless zombies are
+ *   too far away (flanking risk) 43,240
  *
  * 2015, David Whitney
  **/
+
+
+
+//----------------------------------------------------------------------
+//----------------------------------------------------------------------
+/**
+ * Graham's Scan Convex Hull Algorithm
+ * @desc An implementation of the Graham's Scan Convex Hull algorithm in Javascript.
+ * @author Brian Barnett, brian@3kb.co.uk, http://brianbar.net/ || http://3kb.co.uk/
+ * @version 1.0.2
+
+ * https://github.com/brian3kb/graham_scan_js
+ */
+function ConvexHullGrahamScan() {
+    this.anchorPoint = undefined;
+    this.reverse = false;
+    this.points = [];
+}
+
+ConvexHullGrahamScan.prototype = {
+
+    constructor: ConvexHullGrahamScan,
+
+    Point: function (x, y) {
+        this.x = x;
+        this.y = y;
+    },
+
+    _findPolarAngle: function (a, b) {
+        var ONE_RADIAN = 57.295779513082;
+        var deltaX = (b.x - a.x);
+        var deltaY = (b.y - a.y);
+
+        if (deltaX == 0 && deltaY == 0) {
+            return 0;
+        }
+
+        var angle = Math.atan2(deltaY, deltaX) * ONE_RADIAN;
+
+        if (this.reverse){
+            if (angle <= 0) {
+                angle += 360;
+            }
+        }else{
+            if (angle >= 0) {
+                angle += 360;
+            }
+        }
+
+        return angle;
+    },
+
+    addPoint: function (x, y) {
+        //Check to see if anchorPoint has been defined yet.
+        if (this.anchorPoint === undefined) {
+            //Create new anchorPoint.
+            this.anchorPoint = new this.Point(x, y);
+
+            // Sets anchorPoint if point being added is further left.
+        } else if (this.anchorPoint.y > y || (this.anchorPoint.y == y && this.anchorPoint.x > x)) {
+            this.anchorPoint.y = y;
+            this.anchorPoint.x = x;
+            this.points.unshift(new this.Point(x, y));
+            return;
+        }
+
+        this.points.push(new this.Point(x, y));
+    },
+
+    _sortPoints: function () {
+        var self = this;
+
+        return this.points.sort(function (a, b) {
+            var polarA = self._findPolarAngle(self.anchorPoint, a);
+            var polarB = self._findPolarAngle(self.anchorPoint, b);
+
+            if (polarA < polarB) {
+                return -1;
+            }
+            if (polarA > polarB) {
+                return 1;
+            }
+
+            return 0;
+        });
+    },
+
+    _checkPoints: function (p0, p1, p2) {
+        var difAngle;
+        var cwAngle = this._findPolarAngle(p0, p1);
+        var ccwAngle = this._findPolarAngle(p0, p2);
+
+        if (cwAngle > ccwAngle) {
+
+            difAngle = cwAngle - ccwAngle;
+
+            return !(difAngle > 180);
+
+        } else if (cwAngle < ccwAngle) {
+
+            difAngle = ccwAngle - cwAngle;
+
+            return (difAngle > 180);
+
+        }
+
+        return false;
+    },
+
+    getHull: function () {
+        var hullPoints = [],
+            points,
+            pointsLength;
+
+        this.reverse = this.points.every(function(point){
+            return (point.x < 0 && point.y < 0);
+        });
+
+        points = this._sortPoints();
+        pointsLength = points.length;
+
+        //If there are less than 4 points, joining these points creates a correct hull.
+        if (pointsLength < 4) {
+            return points;
+        }
+
+        //move first two points to output array
+        hullPoints.push(points.shift(), points.shift());
+
+        //scan is repeated until no concave points are present.
+        while (true) {
+            var p0,
+                p1,
+                p2;
+
+            hullPoints.push(points.shift());
+
+            p0 = hullPoints[hullPoints.length - 3];
+            p1 = hullPoints[hullPoints.length - 2];
+            p2 = hullPoints[hullPoints.length - 1];
+
+            if (this._checkPoints(p0, p1, p2)) {
+                hullPoints.splice(hullPoints.length - 2, 1);
+            }
+
+            if (points.length == 0) {
+                if (pointsLength == hullPoints.length) {
+                    return hullPoints;
+                }
+                points = hullPoints;
+                pointsLength = points.length;
+                hullPoints = [];
+                hullPoints.push(points.shift(), points.shift());
+            }
+        }
+    }
+};
+
+//----------------------------------------------------------------------
+
 
 var me = {};
 var humans, zombies;
@@ -36,44 +197,86 @@ var zombieKillRadius = 400;
 var humanSaved = false;
 
 function distance( a, b ) {
-  printErr( JSON.stringify( a ) + " to " + JSON.stringify( b ));
+  // printErr( JSON.stringify( a ) + " to " + JSON.stringify( b ));
 
   return Math.sqrt( Math.pow(a.x-b.x, 2) + Math.pow(a.y-b.y, 2));
 }
 
 /**
- * find geomteric center of a set of zombies
+ * If any zombie is a long way away we should defend.
  */
-function centriod( pts ) {
-  var centroid = {};
+function zombiesAreFarAwayFrom( me ) {
+  for (var i=0; i < zombies.length; i++) {
+    if (distance( me, zombies[i]) > 8000) {
+      return true;
+    }
+  }
+  return false;
+}
 
-  var signedArea = 0.0;
-  var x0 = 0.0; // Current vertex X
-  var y0 = 0.0; // Current vertex Y
-  var x1 = 0.0; // Next vertex X
-  var y1 = 0.0; // Next vertex Y
+/**
+ * find geomteric center of a set of zombies
+ * https://en.wikipedia.org/wiki/Centroid#Centroid_of_polygon
+ */
+function findCentroid( pts ) {
+
+  var centroid = {
+    x: 0.0,
+    y: 0.0
+  };
+
+  var x0, y0;   // Current vertex
+  var x1, y1;   // Next vertex
   var a = 0.0;  // Partial signed area
+  var signedArea = 0.0;
 
   // For all vertices
   var numPts = pts.length;
 
-  for (var i=0; i < numPts-1; ++i) {
+  printErr("Finding centroid in pts: " + numPts );
+  for (var i=0; i < numPts; ++i) {
+    printErr("pt: " + pts[i].x + ", " + pts[i].y );
+
     x0 = pts[i].x;
     y0 = pts[i].y;
     x1 = pts[(i+1) % numPts].x;
     y1 = pts[(i+1) % numPts].y;
     a = x0*y1 - x1*y0;
+    if (a === 0) {
+      continue;  // skip if double point
+    }
     signedArea += a;
     centroid.x += (x0 + x1)*a;
     centroid.y += (y0 + y1)*a;
+
+    // printErr( JSON.stringify( centroid ));
   }
 
   signedArea *= 0.5;
   centroid.x /= (6.0*signedArea);
   centroid.y /= (6.0*signedArea);
 
+  printErr( JSON.stringify( centroid ));
+
   return centroid;
 }
+
+/**
+ * Finding a centroid only works on a non-intersecting polygon.
+ * First find the hull of the zombie mass, then get the centroid.
+ */
+function findZombieCentroid() {
+
+  var scanner = new ConvexHullGrahamScan();
+  for (var i=0; i < zombies.length; i++) {
+    scanner.addPoint( zombies[i].x, zombies[i].y );
+  }
+  var centroid = findCentroid( scanner.getHull() );
+
+  print( Math.floor( centroid.x ) + " " + Math.floor( centroid.y  ) +
+         " into the breach!");
+}
+
 
 /**
  * Dumb alg to make a beeline for the nearest zombie.
@@ -184,14 +387,16 @@ while (true) {
   zombies = [];
   for (i = 0; i < zombieCount; i++) {
     inputs = readline().split(' ');
-    var zombieId = parseInt(inputs[0]);
-    zombies.push({
-      x: parseInt(inputs[1]),
-      y: parseInt(inputs[2]),
-      nextX: parseInt(inputs[3]),  // where zombie is headed (human)
-      nextY: parseInt(inputs[4])
-    });
+    zombies.push(
+      {
+        id: parseInt(inputs[0]),
+        x: parseInt(inputs[1]),
+        y: parseInt(inputs[2]),
+        nextX: parseInt(inputs[3]),  // where zombie is headed (human)
+        nextY: parseInt(inputs[4])
+      });
   }
+
 
   if (!humanSaved) {
     findNearestSavableHuman( me );  // stand your ground!
@@ -199,6 +404,18 @@ while (true) {
     findNearestZombie( me );
   }
 
+/*
+  if (!humanSaved || zombiesAreFarAwayFrom( me )) {
+    findNearestSavableHuman( me );  // stand your ground!
+  } else {
+    // findNearestZombie( me );
+    if (zombies.length > 2) {
+      findZombieCentroid( me );
+    } else {
+      findNearestSavableHuman( me );  // stand your ground!
+    }
+  }
+*/
   // should find center mass of zombies, not nearest zombie
   // zombies within 2000 radius of ne
   //
