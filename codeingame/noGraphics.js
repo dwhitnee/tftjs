@@ -11,8 +11,12 @@
  *
  * 2016/01/15, David Whitney
  *
- *  1006 (62/622)
- *  1662 (37/622)
+ *  1006 (62/622) Just avoid the noids
+ *  1662 (37/622) Take new ways at forks
+ *  1672 (37/622) properly check for wrap around cases
+ *  2200: (28/627) reverse direction priorities when we've already been here.
+ *
+ *  TBD:  Search out untracked areas, how?
  **/
 
 function debug( str ) {
@@ -101,51 +105,64 @@ function printField( field ) {
 }
 
 /**
+ * See if the field has a monster at this location
+ * Handles maze wrapping
+ */
+function isMonster( x, y ) {
+  if (x<0) {
+    x += width;
+  }
+  if (x > width-1) {
+    x -= width;
+  }
+  if (y<0) {
+    y += height;
+  }
+  if (y > height-1) {
+    y -= height;
+  }
+
+  return field[x][y].isMonster;
+}
+
+/**
  * ensure we don't run into a ghost, at least not when we don't need to
  */
 function checkForDanger( pacman, field ) {
 
   // check for imminent danger in all directions (plus one)
   if (Actions.right.valid &&
-      (((pacman.x+2 < width) &&
-        field[pacman.x+2][pacman.y].isMonster) ||
-       ((pacman.x+1 < width) &&
-        (field[pacman.x+1][pacman.y].isMonster ||
-         field[pacman.x+1][pacman.y-1].isMonster ||
-         field[pacman.x+1][pacman.y+1].isMonster))))
+      isMonster( x+2, y ) ||
+      isMonster( x+1, y ) ||
+      isMonster( x+1, y-1 ) ||
+      isMonster( x+1, y-1 ))
   {
     Actions.right.valid = false;
   }
 
   if (Actions.left.valid &&
-      (((pacman.x-2 >= 0) &&
-        field[pacman.x-2][pacman.y].isMonster) ||
-       ((pacman.x-1 >= 0) &&
-        (field[pacman.x-1][pacman.y].isMonster ||
-         field[pacman.x-1][pacman.y-1].isMonster ||
-         field[pacman.x-1][pacman.y+1].isMonster))))
+      isMonster( x-2, y ) ||
+      isMonster( x-1, y ) ||
+      isMonster( x-1, y-1 ) ||
+      isMonster( x-1, y+1 ))
   {
     Actions.left.valid = false;
   }
 
   if (Actions.up.valid &&
-      (((pacman.y-2 >= 0) &&
-        field[pacman.x][pacman.y-2].isMonster) ||
-       ((pacman.y-1 >= 0) &&
-        (field[pacman.x][pacman.y-1].isMonster ||
-         field[pacman.x-1][pacman.y-1].isMonster ||
-         field[pacman.x+1][pacman.y-1].isMonster))))
+      isMonster( x, y-2 ) ||
+      isMonster( x, y-1 ) ||
+      isMonster( x-1, y-1 ) ||
+      isMonster( x+1, y-1 ))
   {
     Actions.up.valid = false;
   }
 
   if (Actions.down.valid &&
-      (((pacman.y+2 < height) &&
-        field[pacman.x][pacman.y+2].isMonster) ||
-       ((pacman.y+1 < height) &&
-        (field[pacman.x][pacman.y+1].isMonster ||
-         field[pacman.x-1][pacman.y+1].isMonster ||
-         field[pacman.x+1][pacman.y+1].isMonster))))
+      isMonster( x, y+2 ) ||
+      isMonster( x, y+1 ) ||
+      isMonster( x-1, y+1 ) ||
+      isMonster( x+1, y+1 ))
   {
     Actions.down.valid = false;
   }
@@ -236,14 +253,14 @@ while (true) {
     action = "up";
   } else if (Actions[action].valid) {
     // continue old path even though we've been here before
-  } else if (Actions.left.valid) {
-    action = "left";
-  } else if (Actions.down.valid) {
-    action = "down";
   } else if (Actions.right.valid) {
     action = "right";
   } else if (Actions.up.valid) {
     action = "up";
+  } else if (Actions.left.valid) {
+    action = "left";
+  } else if (Actions.down.valid) {
+    action = "down";
   } else {
     action = "wait";
   }
