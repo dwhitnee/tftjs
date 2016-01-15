@@ -21,6 +21,8 @@
  * o save nearest human first, then go after zombies: 47,430
  * o save nearest human, then find center of zombie mass, unless zombies are
  *   too far away (flanking risk) 43,240
+ * o save nearest human, then find center of zombie mass, unless zombies are
+ *   spead out too much (flanking risk) 38,890
  *
  * 2015, David Whitney
  **/
@@ -195,6 +197,7 @@ var zombieSpeed = 400;
 var zombieKillRadius = 400;
 
 var humanSaved = false;
+var nearestHuman = { x:0, y:0 };
 
 function distance( a, b ) {
   // printErr( JSON.stringify( a ) + " to " + JSON.stringify( b ));
@@ -248,15 +251,16 @@ function findCentroid( pts ) {
     signedArea += a;
     centroid.x += (x0 + x1)*a;
     centroid.y += (y0 + y1)*a;
-
-    // printErr( JSON.stringify( centroid ));
   }
 
   signedArea *= 0.5;
   centroid.x /= (6.0*signedArea);
   centroid.y /= (6.0*signedArea);
 
-  printErr( JSON.stringify( centroid ));
+  centroid.area = Math.abs( signedArea );
+
+  printErr("area: " + Math.abs( signedArea ));
+  // printErr( JSON.stringify( centroid ));
 
   return centroid;
 }
@@ -273,8 +277,16 @@ function findZombieCentroid() {
   }
   var centroid = findCentroid( scanner.getHull() );
 
-  print( Math.floor( centroid.x ) + " " + Math.floor( centroid.y  ) +
-         " into the breach!");
+  if (!centroid.area || centroid.area > 27412127) {
+    humanSaved = false;  // force retreat, area is too big to cover
+  }
+
+  if (!centroid.area) {
+    findNearestSavableHuman( me );
+  } else {
+    print( Math.floor( centroid.x ) + " " + Math.floor( centroid.y  ) +
+           " into the breach!");
+  }
 }
 
 
@@ -282,7 +294,7 @@ function findZombieCentroid() {
  * Dumb alg to make a beeline for the nearest zombie.
  * Should really go to the nearest human in danger.
  */
-function findNearestZombie( me ) {
+function findNearestZombie( person ) {
   var zombie = undefined;
   var bestDistance = 100000;
 
@@ -290,7 +302,7 @@ function findNearestZombie( me ) {
     if (!zombies[i]) {  // this zombie is dead already..
       continue;
     }
-    var zombieDistance = distance( me, zombies[i]);
+    var zombieDistance = distance( person, zombies[i]);
     if (zombieDistance < bestDistance) {
       zombie = zombies[i];
       bestDistance = zombieDistance;
@@ -327,7 +339,6 @@ function isHumanSavable( human, me ) {
 
 /**
  * This works by guarnteeing one saved human.
- * TBD: lure zombies away from safe humans.
  */
 function findNearestSavableHuman( me ) {
   var human = undefined;
@@ -356,6 +367,62 @@ function findNearestSavableHuman( me ) {
     print("0 0 Doh!");
   }
 }
+
+
+/**
+ * This human is within one step of us not reaching it in time
+ */
+function dangerLevel( human ) {
+
+  var mostDanger = 1000;
+
+  var turnsToSaveHuman = Math.ceil(
+    (distance(me, human) - ashKillRadius) / ashSpeed );
+
+  for (var i = 0; i < zombies.length; i++) {
+    var turnsBeforeZombieKillsHuman = Math.ceil(
+      (distance( zombies[i], human) - zombieKillRadius) / zombieSpeed );
+
+    var danger = turnsBeforeZombieKillsHuman - turnsToSaveHuman;
+    if ((danger >= 0) && (danger < mostDanger)) {
+      mostDanger = danger;
+    }
+  }
+  return mostDanger;   // this guy is OK for now.  Or walking dead
+}
+
+
+/**
+ * This works by guarnteeing one saved human.
+ */
+function findNearestSavableHumanInMostDanger( me ) {
+  var human = undefined;
+  var bestDistance = 100000;
+  var worstDanger = 1000;  // turns until death
+
+  for (var i = 0; i < humans.length; i++) {
+    var danger = dangerLevel( humans[i] );
+    var humanDistance = distance( me, humans[i]);
+
+    // break ties based on distance?
+    if ((danger < worstDanger)) {
+      // if ((humanDistance < bestDistance) && humanInDanger( humans[i] )) {
+//      if (isHumanSavable( humans[i], me )) {
+        human = humans[i];
+        worstDanger = danger;
+        bestDistance = humanDistance;
+//      }
+    }
+  }
+
+  if (human) {
+    printErr("Human in danger! " + worstDanger);
+    print( human.x + " " + human.y + " " + message);
+  } else {
+    return null;
+  }
+}
+
 
 var numZombies = 1000;
 
@@ -397,27 +464,30 @@ while (true) {
       });
   }
 
+  if (!findNearestSavableHumanInMostDanger( me )) {  // search for damsels
+     findNearestSavableHuman( me );  // stand your ground!
+   }
 
-  if (!humanSaved) {
-    findNearestSavableHuman( me );  // stand your ground!
+/*
+ if (!humanSaved) {
+   if (!findNearestSavableHumanInDanger( me )) {  // search for damsels
+     findNearestSavableHuman( me );  // stand your ground!
+   }
   } else {
     findNearestZombie( me );
   }
 
-/*
-  if (!humanSaved || zombiesAreFarAwayFrom( me )) {
+
+  if (!humanSaved) { //  || zombiesAreFarAwayFrom( me )) {
     findNearestSavableHuman( me );  // stand your ground!
   } else {
     // findNearestZombie( me );
     if (zombies.length > 2) {
-      findZombieCentroid( me );
+      findZombieCentroid();
     } else {
-      findNearestSavableHuman( me );  // stand your ground!
+      findNearestZombie( me );        // attack!
+      // findNearestSavableHuman( me );  // stand your ground!
     }
   }
 */
-  // should find center mass of zombies, not nearest zombie
-  // zombies within 2000 radius of ne
-  //
-  // unlessMovingAwayWouldKillLastHumanFindNearestZombie
 }
