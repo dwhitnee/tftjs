@@ -1,6 +1,18 @@
 /**
- * This seems to be PacMan
- * 2016, David Whitney
+ * This seems to be PacMan.
+ * Initial inputs are size of grid and # of monsters
+ * Loop inputs are valid moves and location of everyone.
+ *
+ * Move our guy around the maze and try to build up a valid picture of
+ * the world while avoiding capture. Points seem to be allocated for
+ * each new square we occupy.
+ *
+ * The maze wraps around on itself.
+ *
+ * 2016/01/15, David Whitney
+ *
+ *  1006 (62/622)
+ *  1662 (37/622)
  **/
 
 function debug( str ) {
@@ -10,6 +22,7 @@ function debug( str ) {
 var height = parseInt(readline());
 var width = parseInt(readline());
 var numThings = parseInt(readline());
+var pacman = {};
 
 debug( numThings + " on " + width + "x" + height);
 
@@ -39,20 +52,38 @@ var Actions = {
 
 var action = "left";
 
+/**
+ * set up maze with emptiness
+ */
 function initField( field ) {
   for (var x = 0; x < width; x++) {
     field[x] = [];
     for (var y = 0; y < height; y++) {
-      field[x][y] = ".";
+      field[x][y] = {
+        display: ".",
+        wall: false,
+        visited: false
+      };
     }
   }
 }
 
+/**
+ * update maze with known information
+ */
 function clearField( field ) {
   for (var x = 0; x < width; x++) {
     for (var y = 0; y < height; y++) {
-      if (field[x][y] === "O") {
-        field[x][y] = ".";
+      field[x][y].display = " ";
+      field[x][y].isMonster = false;
+      field[x][y].isPacman = false;
+
+      if (field[x][y].isWall) {
+        field[x][y].display = "#";
+      }
+
+      if (field[x][y].visited) {
+        field[x][y].display = ".";
       }
     }
   }
@@ -63,12 +94,68 @@ function printField( field ) {
   for (var y = 0; y < height; y++) {
     var line = "";
     for (var x = 0; x < width; x++) {
-      line += field[x][y];
+      line += field[x][y].display;
     }
     debug( line );
   }
 }
 
+/**
+ * ensure we don't run into a ghost, at least not when we don't need to
+ */
+function checkForDanger( pacman, field ) {
+
+  // check for imminent danger in all directions (plus one)
+  if (Actions.right.valid &&
+      (((pacman.x+2 < width) &&
+        field[pacman.x+2][pacman.y].isMonster) ||
+       ((pacman.x+1 < width) &&
+        (field[pacman.x+1][pacman.y].isMonster ||
+         field[pacman.x+1][pacman.y-1].isMonster ||
+         field[pacman.x+1][pacman.y+1].isMonster))))
+  {
+    Actions.right.valid = false;
+  }
+
+  if (Actions.left.valid &&
+      (((pacman.x-2 >= 0) &&
+        field[pacman.x-2][pacman.y].isMonster) ||
+       ((pacman.x-1 >= 0) &&
+        (field[pacman.x-1][pacman.y].isMonster ||
+         field[pacman.x-1][pacman.y-1].isMonster ||
+         field[pacman.x-1][pacman.y+1].isMonster))))
+  {
+    Actions.left.valid = false;
+  }
+
+  if (Actions.up.valid &&
+      (((pacman.y-2 >= 0) &&
+        field[pacman.x][pacman.y-2].isMonster) ||
+       ((pacman.y-1 >= 0) &&
+        (field[pacman.x][pacman.y-1].isMonster ||
+         field[pacman.x-1][pacman.y-1].isMonster ||
+         field[pacman.x+1][pacman.y-1].isMonster))))
+  {
+    Actions.up.valid = false;
+  }
+
+  if (Actions.down.valid &&
+      (((pacman.y+2 < height) &&
+        field[pacman.x][pacman.y+2].isMonster) ||
+       ((pacman.y+1 < height) &&
+        (field[pacman.x][pacman.y+1].isMonster ||
+         field[pacman.x-1][pacman.y+1].isMonster ||
+         field[pacman.x+1][pacman.y+1].isMonster))))
+  {
+    Actions.down.valid = false;
+  }
+
+}
+
+
+
+//----------------------------------------------------------------------
+//----------------------------------------------------------------------
 
 initField( field );
 
@@ -76,37 +163,79 @@ initField( field );
 while (true) {
   clearField( field );
 
-  Actions.up.valid = ("_" === readline());
-  Actions.right.valid = ("_" === readline());
-  Actions.down.valid = ("_" === readline());
-  Actions.left.valid = ("_" === readline());
+  // figure out where walls are, inputs are _ or #
+  var a = readline();
+  var b = readline();
+  var c = readline();
+  var d = readline();
 
+  debug("" + a+b+c+d);
+
+  // figure out where monsters (and we) are
   for (var i = 0; i < numThings; i++) {
     var inputs = readline().split(' ');
     debug( inputs );
     var x = parseInt(inputs[0]);
     var y = parseInt(inputs[1]);
-    field[x][y] = "O";
+    field[x][y].isMonster = true;
+    field[x][y].display = "@";
+
+    // it's us!
+    if (i+1 === numThings) {
+      pacman.x = x;
+      pacman.y = y;
+      field[x][y].isPacman = true;
+      field[x][y].visited = true;
+      field[x][y].display = "<";
+    }
   }
 
-  if (!Actions.up.valid) {
-    field[x][y-1] = "-";
-  }
-  if (!Actions.down.valid) {
-    field[x][y+1] = "-";
-  }
+  // Now see where we can go and where is unexplored.
 
-  if (!Actions.left.valid) {
-    field[x-1][y] = "|";
+  Actions.up.valid = ("_" === a);
+  Actions.right.valid = ("_" === b);
+  Actions.down.valid = ("_" === c);
+  Actions.left.valid = ("_" === d);
+
+  var x = pacman.x;
+  var y = pacman.y;
+
+  // put up walls in invalid directions, and check for fresh powder
+  if (y > 0) {
+    field[x][y-1].isWall = !Actions.up.valid;
+    Actions.up.smart =    Actions.up.valid && !field[x][y-1].visited;
   }
-  if (!Actions.right.valid) {
-    field[x-1][y] = "|";
+  if (y < height-1) {
+    field[x][y+1].isWall = !Actions.down.valid;
+    Actions.down.smart =  Actions.down.valid && !field[x][y+1].visited;
+  }
+  if (x > 0) {
+    field[x-1][y].isWall = !Actions.left.valid;
+    Actions.left.smart =  Actions.left.valid && !field[x-1][y].visited;
+  }
+  if (x < width-1) {
+    field[x+1][y].isWall = !Actions.right.valid;
+    Actions.right.smart = Actions.right.valid && !field[x+1][y].visited;
   }
 
   printField( field );
 
-  if ( Actions[action].valid ) {
-  // keep going if possible
+  checkForDanger( pacman, field );
+
+  // take unexplored ways first, continue old path if safe
+
+  if (Actions[action].valid && Actions[action].smart) {
+    // continue old path
+  } else if (Actions.left.valid && Actions.left.smart) {
+    action = "left";
+  } else if (Actions.down.valid && Actions.down.smart) {
+    action = "down";
+  } else if (Actions.right.valid && Actions.right.smart) {
+    action = "right";
+  } else if (Actions.up.valid && Actions.up.smart) {
+    action = "up";
+  } else if (Actions[action].valid) {
+    // continue old path even though we've been here before
   } else if (Actions.left.valid) {
     action = "left";
   } else if (Actions.down.valid) {
