@@ -15,8 +15,10 @@
  *  1662 (37/622) Take new ways at forks
  *  1672 (37/622) properly check for wrap around cases
  *  2200: (28/627) reverse direction priorities when we've already been here.
+ *  2023: Try and hug left wall if it's smart, this leads to loops when stuck on islands
  *
  *  TBD:  Search out untracked areas, how?
+ *  TBD: collect known untaken exits and seek them out.
  **/
 
 function debug( str ) {
@@ -54,7 +56,7 @@ var Actions = {
   }
 };
 
-var action = "left";
+var action = Actions.left;
 
 /**
  * set up maze with emptiness
@@ -166,12 +168,71 @@ function checkForDanger( pacman, field ) {
   {
     Actions.down.valid = false;
   }
+}
 
+/**
+ * @param actions prioritized list of potential actions,
+ * @return the first action that is not a wall or a monster
+ */
+function getFirstValidAction( actions ) {
+  var i;
+
+  for (i=0; i < actions.length; i++) {
+    if (actions[i].valid && actions[i].smart) {
+      return actions[i];
+    }
+  }
+  for (i=0; i < actions.length; i++) {
+    if (actions[i].valid) {
+      return actions[i];
+    }
+  }
+  return Actions.wait;
+}
+
+/**
+ * @param actions prioritized list of potential actions,
+ * @return the first action that is fresh powder
+ */
+function getFirstFreshAction( actions ) {
+  var i;
+
+  for (i=0; i < actions.length; i++) {
+    if (actions[i].valid && actions[i].smart) {
+      return actions[i];
+    }
+  }
+  return Actions.wait;
 }
 
 
+/**
+ * @return the action that keeps us hugging the left wall given our current path of travel
+ */
+function getHugLeftWallAction( field, currentAction ) {
+
+  if (currentAction === Actions.up) {
+    return getFirstValidAction( [Actions.left, Actions.up, Actions.right, Actions.down] );
+  }
+
+  if (currentAction === Actions.down) {
+    return getFirstValidAction( [Actions.right, Actions.down, Actions.left, Actions.up ] );
+  }
+
+  if (currentAction === Actions.left) {
+    return getFirstValidAction( [Actions.down, Actions.left, Actions.up, Actions.right] );
+  }
+
+  if (currentAction === Actions.right) {
+    return getFirstValidAction( [Actions.up, Actions.right, Actions.down, Actions.left] );
+  }
+
+  return Actions.wait;
+}
+
 
 //----------------------------------------------------------------------
+//  Main
 //----------------------------------------------------------------------
 
 initField( field );
@@ -240,31 +301,40 @@ while (true) {
   checkForDanger( pacman, field );
 
   // take unexplored ways first, continue old path if safe
+  // only looks at square ahead of us, does not plan a route out to unexplored space
+  // TBD: collect known untaken exits and seek them out.
 
-  if (Actions[action].valid && Actions[action].smart) {
+  // 1. if fresh powder anywhere, take it in hug-left fashion
+  // 2. goal seek to all known fresh powder and plot shortest route.
+
+  action = getHugLeftWallAction( field, action );
+
+/*
+  if (action.valid && action.smart) {
     // continue old path
   } else if (Actions.left.valid && Actions.left.smart) {
-    action = "left";
+    action = Actions.left;
   } else if (Actions.down.valid && Actions.down.smart) {
-    action = "down";
+    action = Actions.down;
   } else if (Actions.right.valid && Actions.right.smart) {
-    action = "right";
+    action = Actions.right;
   } else if (Actions.up.valid && Actions.up.smart) {
-    action = "up";
-  } else if (Actions[action].valid) {
+    action = Actions.up;
+
+  } else if (action.valid) {
     // continue old path even though we've been here before
   } else if (Actions.right.valid) {
-    action = "right";
+    action = Actions.right;
   } else if (Actions.up.valid) {
-    action = "up";
+    action = Actions.up;
   } else if (Actions.left.valid) {
-    action = "left";
+    action = Actions.left;
   } else if (Actions.down.valid) {
-    action = "down";
+    action = Actions.down;
   } else {
-    action = "wait";
+    action = Actions.wait;
   }
-
-  debug("Moving " + action );
-  print( Actions[action].cmd );
+*/
+  // debug("Moving " + action.description );
+  print( action.cmd );
 }
