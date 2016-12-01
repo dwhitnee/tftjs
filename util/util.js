@@ -1,3 +1,5 @@
+// This is OBSOLETE with ECMAScript2015 classes
+
 //----------------------------------------------------------------------
 //  Take all arguments and place them in the new class's prototype
 //
